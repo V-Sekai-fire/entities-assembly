@@ -1,0 +1,4 @@
+target main
+flags merge --no-ff
+stage main topic-a
+merge main topic-b
