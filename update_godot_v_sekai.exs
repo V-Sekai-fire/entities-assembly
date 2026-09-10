@@ -177,14 +177,34 @@ try do
     run!.("git", ["checkout", merge_branch, "-f"])
     run!.("git", ["commit", "--allow-empty", "-m", "Merge branch '#{merge_branch}'"])
 
-    # Tag the assembled state and push only the tag — the moving branch stays
-    # local. The tag is the durable, immutable artifact consumers depend on;
-    # force-pushing the branch overwrites prior assemblies.
+    # Tag the assembled state, then move the branch to it. The tag is the
+    # durable artifact and every prior assembly keeps its own, so advancing the
+    # branch discards no history. Publishing only the tag left the branch the
+    # config names existing nowhere but a gitignored work directory.
     run!.("git", ["tag", "-a", tag_name, "-m", "#{merge_branch} #{tag_name}"])
     run!.("git", ["push", merge_remote, tag_name])
     IO.puts("Pushed tag #{tag_name}.")
+
+    # A lease needs a remote-tracking ref to compare against, so a branch that
+    # does not exist upstream yet is pushed plainly; one that does is pushed
+    # against the value fetched at the start of this run, which fails rather
+    # than overwrites if somebody else moved it meanwhile.
+    remote_ref = "refs/remotes/#{merge_remote}/#{merge_branch}"
+
+    push_args =
+      case System.cmd("git", ["rev-parse", "--verify", "--quiet", remote_ref], stderr_to_stdout: true) do
+        {sha, 0} ->
+          ["push", "--force-with-lease=#{merge_branch}:#{String.trim(sha)}", merge_remote,
+           "#{merge_branch}:refs/heads/#{merge_branch}"]
+
+        _ ->
+          ["push", merge_remote, "#{merge_branch}:refs/heads/#{merge_branch}"]
+      end
+
+    run!.("git", push_args)
+    IO.puts("Pushed branch #{merge_branch}.")
   else
-    IO.puts("Dry run: would tag as #{tag_name} (no push).")
+    IO.puts("Dry run: would tag as #{tag_name} and move #{merge_branch} to it (no push).")
   end
 rescue
   e ->

@@ -28,7 +28,6 @@ merge dev/fabric-0.1.0 remotes/v-sekai-fire/feat/engine-patches
 merge dev/fabric-0.1.0 remotes/v-sekai-fire/feat/module-game
 merge dev/fabric-0.1.0 remotes/v-sekai-fire/feat/module-sandbox
 
-merge dev/fabric-0.1.0 remotes/v-sekai-fire/feat/vendor-ggml-thirdparty
 merge dev/fabric-0.1.0 remotes/v-sekai-fire/feat/module-ggml
 merge dev/fabric-0.1.0 remotes/v-sekai-fire/feat/module-motion-bricks
 merge dev/fabric-0.1.0 remotes/v-sekai-fire/feat/module-pixal3d
