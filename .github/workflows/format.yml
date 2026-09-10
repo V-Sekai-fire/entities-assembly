@@ -18,7 +18,7 @@ name: format
 
 on:
   push:
-    branches: [main]
+    branches: [main/main]
   pull_request:
 
 permissions:
