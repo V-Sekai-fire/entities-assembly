@@ -2,6 +2,14 @@
 # git-assembler: update git branches using high-level instructions
 # Copyright(c) 2019-2023 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
 # Distributed under the GNU GPLv3+ license, WITHOUT ANY WARRANTY.
+#
+# Modified by V-Sekai Contributors:
+#   2026-04-18  vendored here as thirdparty/git-assembler
+#   2026-09-10  removed '#' comment stripping from the config parser
+#
+# This file stays under the GNU GPLv3+, whatever the rest of the repository is
+# licensed as. The licence text is thirdparty/git-assembler.LICENSE; ../LICENSE
+# is MIT and does not cover this file.
 import subprocess as sp
 import argparse
 import os, sys
