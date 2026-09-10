@@ -1,4 +1,4 @@
-stage dev/multiplayer-fabric remotes/v-sekai-fire/feat/feat/ci-ar-response-file
+stage dev/multiplayer-fabric remotes/v-sekai-fire/feat/ci-ar-response-file
 
 merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/d3d12-download-retry
 
@@ -11,8 +11,8 @@ merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/lint-config
 merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/double-precision-mobile
 merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/call-gui-input
 merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/module-sqlite
-merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/module-dev/multiplayer-fabric
-merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/module-dev/multiplayer-fabric-asset
+merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/module-multiplayer-fabric
+merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/module-multiplayer-fabric-asset
 merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/module-open-telemetry
 merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/module-keychain
 merge dev/multiplayer-fabric remotes/v-sekai-fire/feat/module-cassie
