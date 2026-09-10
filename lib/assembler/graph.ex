@@ -5,9 +5,10 @@ defmodule Assembler.Graph do
   Two behaviours here are easy to miss and both come from git-assembler, which
   this replaces:
 
-    * merging a node's own base into it is a no-op and is discarded, unless the
-      node is a plain `base` type. Base switching is allowed for
-      experimentation, so this warns rather than failing.
+    * merging a node's own base into it is a no-op and is an error, unless the
+      node is a plain `base` type. git-assembler warned and discarded the rule
+      to allow base switching while experimenting; a warning is a silent skip
+      with extra text, so this fails instead and the author deletes the line.
 
     * a branch named as a base or a merge dependency but never given a rule of
       its own still becomes a node, with no dependencies of its own.
@@ -19,19 +20,21 @@ defmodule Assembler.Graph do
   Resolve names to nodes and compute each node's ordered dependencies: base
   first, then merges in the order written.
 
-  Returns `{nodes, warnings}`; a discarded no-op merge produces a warning
-  rather than being dropped silently, because a rule that vanished and a rule
-  that applied look the same in the result.
+  Returns `{:ok, nodes}` or `{:error, reason}`.
   """
   def build(nodes) do
     nodes = Enum.reduce(nodes, nodes, &ensure_referenced/2)
 
-    Enum.reduce(nodes, {%{}, []}, fn {name, node}, {acc, warns} ->
-      {merge, warns} = filter_useless(node, warns)
-      deps = if(node.base, do: [node.base], else: []) ++ merge
-      {Map.put(acc, name, %{node | merge: merge}) |> put_deps(name, deps), warns}
+    Enum.reduce_while(nodes, {:ok, %{}}, fn {name, node}, {:ok, acc} ->
+      case check_useless(node) do
+        :ok ->
+          deps = if(node.base, do: [node.base], else: []) ++ node.merge
+          {:cont, {:ok, Map.put(acc, name, Map.put(node, :deps, deps))}}
+
+        {:error, _} = err ->
+          {:halt, err}
+      end
     end)
-    |> then(fn {acc, warns} -> {acc, Enum.reverse(warns)} end)
   end
 
   # a name used as a base or dep, but never defined by a rule, is still a node
@@ -43,17 +46,12 @@ defmodule Assembler.Graph do
     end)
   end
 
-  defp filter_useless(%Node{} = node, warns) do
-    Enum.reduce(node.merge, {[], warns}, fn dep, {keep, w} ->
-      if dep == node.base and node.type != :base do
-        {keep, ["discarding useless merge of branch #{dep} into #{node.name}" | w]}
-      else
-        {keep ++ [dep], w}
-      end
-    end)
+  defp check_useless(%Node{} = node) do
+    case Enum.find(node.merge, &(&1 == node.base and node.type != :base)) do
+      nil -> :ok
+      dep -> {:error, "useless merge of branch #{dep} into #{node.name}: it is already the base"}
+    end
   end
-
-  defp put_deps(acc, name, deps), do: Map.update!(acc, name, &Map.put(&1, :deps, deps))
 
   @doc """
   Depth-first post-order over `targets`, so every dependency precedes the node

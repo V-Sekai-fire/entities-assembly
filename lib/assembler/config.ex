@@ -154,8 +154,9 @@ defmodule Assembler.Config do
     end
   end
 
-  # An explicit duplicate is an error; a duplicate that a pattern happened to
-  # produce is skipped, because the author did not name it twice.
+  # Both an explicit duplicate and one a pattern produced are errors.
+  # git-assembler skipped the expanded case with an informational message; a
+  # skip that only prints is indistinguishable from one that applied.
   defp collect_deps(args, node, branches, n, path) do
     Enum.reduce_while(args, {:ok, []}, fn arg, {:ok, acc} ->
       cond do
@@ -168,7 +169,11 @@ defmodule Assembler.Config do
         true ->
           case expand(arg, branches) do
             [] -> {:halt, {:error, err(path, n, "pattern #{arg} in rule does not match any branch")}}
-            list -> {:cont, {:ok, acc ++ Enum.reject(list, &(&1 in acc or &1 in node.merge))}}
+            list ->
+              case Enum.find(list, &(&1 in acc or &1 in node.merge)) do
+                nil -> {:cont, {:ok, acc ++ list}}
+                dup -> {:halt, {:error, err(path, n, "pattern #{arg} expands to #{dup}, already merged into #{node.name}")}}
+              end
           end
       end
     end)
