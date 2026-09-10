@@ -1,2 +1,14 @@
 .DS_Store
 .assembly-work/
+
+# Mix / Elixir
+/_build/
+/deps/
+/cover/
+/doc/
+*.ez
+erl_crash.dump
+.elixir_ls/
+
+# Burrito output
+/burrito_out/

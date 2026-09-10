@@ -1,0 +1,35 @@
+defmodule Assembler.MixProject do
+  use Mix.Project
+
+  def project do
+    [
+      app: :assembler,
+      version: "0.1.0",
+      elixir: "~> 1.17",
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env())
+    ]
+  end
+
+  def application do
+    [extra_applications: [:logger]]
+  end
+
+  # egit is an Erlang NIF over libgit2, Apache-2.0. It replaces the GPLv3
+  # thirdparty/git-assembler this repository has been carrying. Only local
+  # operations go through it -- branch, merge, rebase, rev-parse -- because the
+  # assembler itself makes no network calls; clone and fetch stay on system git
+  # in update_godot_v_sekai.exs.
+  defp deps do
+    [
+      # Fork: upstream's commit/2 records only HEAD as a parent, so a commit
+      # concluding a merge has one parent and git never sees the branch as
+      # merged. The fork reads MERGE_HEAD. Patch offered upstream.
+      {:egit, github: "V-Sekai-fire/egit", branch: "merge-commit-parents"}
+    ]
+  end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+end
