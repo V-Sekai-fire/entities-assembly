@@ -25,4 +25,10 @@ merge multiplayer-fabric remotes/v-sekai-fabric/feat/citation
 merge multiplayer-fabric remotes/v-sekai-fabric/feat/engine-patches
 merge multiplayer-fabric remotes/v-sekai-fabric/feat/module-game
 
-merge multiplayer-fabric remotes/v-sekai-fabric/fix-godot-cpp-ar-argument-limit
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/ci-ar-response-file
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/module-ggml
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/module-motion-bricks
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/module-pixal3d
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/module-rf-detr
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/module-kimodo
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/module-skin-tokens
