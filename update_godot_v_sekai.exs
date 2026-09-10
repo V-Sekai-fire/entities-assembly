@@ -14,12 +14,11 @@ end
 
 dry_run = Enum.any?(argv, &(&1 in ["-n", "--no-push", "--dry-run"]))
 
-merge_remote = "v-sekai-multiplayer-fabric"
-# The engine repository was renamed `godot` -> `fabric-godot-core`. The old name still
-# redirects, which is why this kept working and why it was worth fixing anyway: a redirect is
-# somebody else's promise, and a clone made through one is named after a repository that no
-# longer exists.
-merge_remote_url = "git@github.com:v-sekai-multiplayer-fabric/fabric-godot-core.git"
+merge_remote = "v-sekai-fire"
+# Named for where the engine actually lives. `v-sekai-multiplayer-fabric` is an archived org
+# and `v-sekai-fabric` redirects; both resolved here, so every run was clone-through-redirect,
+# which is somebody else's promise and not a name this repository should depend on.
+merge_remote_url = "git@github.com:V-Sekai-fire/entities-godot.git"
 opentelemetry_remote = "opentelemetry-godot"
 opentelemetry_remote_url = "git@github.com:V-Sekai-fire/opentelemetry-godot.git"
 original_branch = "master"
@@ -42,11 +41,11 @@ godot_path =
     nil ->
       parent = Path.dirname(script_dir)
 
-      ["fabric-godot-core", "godot"]
+      ["entities-godot-sandbox", "entities-godot", "fabric-godot-core", "godot"]
       |> Enum.map(&Path.expand(Path.join(parent, &1)))
       |> Enum.find(&File.dir?(Path.join(&1, ".git")))
       |> case do
-        nil -> Path.expand(Path.join(parent, "fabric-godot-core"))
+        nil -> Path.expand(Path.join(parent, "entities-godot-sandbox"))
         found -> found
       end
 
