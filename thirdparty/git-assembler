@@ -79,9 +79,6 @@ def parse_assembly(path, branches):
                     'rebase': []}
 
     for n, line in enumerate(fd, 1):
-        # strip comments
-        line = line.split(b'#', 1)[0]
-
         # basic tokenization
         tokens = line.split()
         if len(tokens) == 0:

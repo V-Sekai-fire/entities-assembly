@@ -19,3 +19,10 @@ merge multiplayer-fabric remotes/v-sekai-multiplayer-fabric/feat/module-speech
 merge multiplayer-fabric remotes/v-sekai-multiplayer-fabric/feat/native-media
 merge multiplayer-fabric remotes/v-sekai-multiplayer-fabric/feat/module-resonance-audio
 merge multiplayer-fabric remotes/v-sekai-fabric/feat/module-cineform
+
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/assets
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/citation
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/engine-patches
+merge multiplayer-fabric remotes/v-sekai-fabric/feat/module-game
+
+merge multiplayer-fabric remotes/v-sekai-fabric/fix-godot-cpp-ar-argument-limit
