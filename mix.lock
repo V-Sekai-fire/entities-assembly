@@ -1,0 +1,3 @@
+%{
+  "egit": {:git, "https://github.com/V-Sekai-fire/egit.git", "2b6978717a9229a285ffe427113fa2b7ef96380b", [branch: "merge-commit-parents"]},
+}

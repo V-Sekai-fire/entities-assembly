@@ -14,18 +14,28 @@ end
 
 dry_run = Enum.any?(argv, &(&1 in ["-n", "--no-push", "--dry-run"]))
 
+# HTTPS, not SSH. Everything else in this workspace authenticates to github.com
+# with the v-sekai-fire-persona installation token through the git credential
+# helper; the SSH path needs an agent holding a key, which CI runners do not have
+# and which fails on a desk whose agent has dropped its keys. The failure mode was
+# a 60-second stall then "Permission denied (publickey)" before any work started.
 merge_remote = "v-sekai-fire"
 # Named for where the engine actually lives. `v-sekai-multiplayer-fabric` is an archived org
 # and `v-sekai-fabric` redirects; both resolved here, so every run was clone-through-redirect,
 # which is somebody else's promise and not a name this repository should depend on.
-merge_remote_url = "git@github.com:V-Sekai-fire/entities-godot.git"
+merge_remote_url = "https://github.com/V-Sekai-fire/entities-godot.git"
 opentelemetry_remote = "opentelemetry-godot"
-opentelemetry_remote_url = "git@github.com:V-Sekai-fire/opentelemetry-godot.git"
+opentelemetry_remote_url = "https://github.com/V-Sekai-fire/opentelemetry-godot.git"
 # Resolved from the clone's origin/HEAD after cd, not hardcoded: the engine
 # repository's default branch is not necessarily `master`, and a script that
 # assumes one name fails with "not on master branch" the day it changes.
 original_branch = nil
-merge_branch = "multiplayer-fabric"
+# Read from the assembly config's own stage line rather than duplicated here.
+# The config was renamed multiplayer-fabric -> dev/fabric-0.1.0 and this constant
+# was not, so cleanup deleted a branch that no longer existed and left the real
+# assembled branch behind -- the exact stray-branch failure the comment further
+# down warns about -- while the tag went out named after the old target.
+merge_branch = nil
 
 # Absolute paths resolved before cd — the assembler and config live here, all git
 # work happens in the disposable clone below.
@@ -48,6 +58,28 @@ godot_path =
 
 assembler_path = Path.join(script_dir, "thirdparty/git-assembler")
 assembler_config = Path.join(script_dir, "gitassembly")
+
+merge_branch =
+  case File.read(assembler_config) do
+    {:ok, text} ->
+      text
+      |> String.split("\n")
+      |> Enum.find_value(fn line ->
+        case String.split(String.trim(line), ~r/\s+/) do
+          ["stage", target | _] -> target
+          _ -> nil
+        end
+      end)
+      |> case do
+        nil -> raise "no `stage` line in #{assembler_config}; cannot tell which branch is assembled"
+        target -> target
+      end
+
+    {:error, reason} ->
+      raise "cannot read #{assembler_config}: #{inspect(reason)}"
+  end
+
+IO.puts("Assembled branch: #{merge_branch}")
 
 unless File.dir?(Path.join(godot_path, ".git")) do
   File.mkdir_p!(Path.dirname(godot_path))
@@ -136,20 +168,43 @@ try do
     "v" <>
       (DateTime.utc_now()
        |> Calendar.strftime("%Y.%m.%d.%H%M")) <>
-      "-#{merge_branch}"
+      # Slashes are legal in a tag but would nest it under a namespace, and every
+      # existing tag is flat (v2026.05.20.1550-multiplayer-fabric). The branch
+      # keeps its slash; only the tag suffix is flattened.
+      "-" <> String.replace(merge_branch, "/", "-")
 
   if not dry_run do
     run!.("git", ["checkout", merge_branch, "-f"])
     run!.("git", ["commit", "--allow-empty", "-m", "Merge branch '#{merge_branch}'"])
 
-    # Tag the assembled state and push only the tag — the moving branch stays
-    # local. The tag is the durable, immutable artifact consumers depend on;
-    # force-pushing the branch overwrites prior assemblies.
+    # Tag the assembled state, then move the branch to it. The tag is the
+    # durable artifact and every prior assembly keeps its own, so advancing the
+    # branch discards no history. Publishing only the tag left the branch the
+    # config names existing nowhere but a gitignored work directory.
     run!.("git", ["tag", "-a", tag_name, "-m", "#{merge_branch} #{tag_name}"])
     run!.("git", ["push", merge_remote, tag_name])
     IO.puts("Pushed tag #{tag_name}.")
+
+    # A lease needs a remote-tracking ref to compare against, so a branch that
+    # does not exist upstream yet is pushed plainly; one that does is pushed
+    # against the value fetched at the start of this run, which fails rather
+    # than overwrites if somebody else moved it meanwhile.
+    remote_ref = "refs/remotes/#{merge_remote}/#{merge_branch}"
+
+    push_args =
+      case System.cmd("git", ["rev-parse", "--verify", "--quiet", remote_ref], stderr_to_stdout: true) do
+        {sha, 0} ->
+          ["push", "--force-with-lease=#{merge_branch}:#{String.trim(sha)}", merge_remote,
+           "#{merge_branch}:refs/heads/#{merge_branch}"]
+
+        _ ->
+          ["push", merge_remote, "#{merge_branch}:refs/heads/#{merge_branch}"]
+      end
+
+    run!.("git", push_args)
+    IO.puts("Pushed branch #{merge_branch}.")
   else
-    IO.puts("Dry run: would tag as #{tag_name} (no push).")
+    IO.puts("Dry run: would tag as #{tag_name} and move #{merge_branch} to it (no push).")
   end
 rescue
   e ->
