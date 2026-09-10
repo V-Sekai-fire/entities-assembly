@@ -24,42 +24,34 @@ opentelemetry_remote_url = "git@github.com:V-Sekai-fire/opentelemetry-godot.git"
 original_branch = "master"
 merge_branch = "multiplayer-fabric"
 
-# Absolute paths resolved before cd — the assembler and config live here, but all git work
-# happens in the engine checkout beside this repository.
+# Absolute paths resolved before cd — the assembler and config live here, all git
+# work happens in the disposable clone below.
 #
-# The sibling is `fabric-godot-core`, which is the name the manifest clones it under. This
-# looked for `godot` and found nothing, so every run cloned a second multi-gigabyte tree next
-# to a checkout that was already there — and then assembled from a copy nobody had touched,
-# which is exactly the wrong one to assemble from if a branch was being tested locally.
-#
-# `GODOT_PATH` overrides, because a machine that does keep it elsewhere should not have to edit
-# this file to say so.
+# `GODOT_PATH` overrides, because a machine that keeps the tree elsewhere should
+# not have to edit this file to say so.
 script_dir = __ENV__.file |> Path.dirname() |> Path.expand()
+
+# Assemble in a throwaway clone, never in a checkout somebody is working in.
+# The steps below run `git stash --include-untracked`, `git checkout --force`
+# and `git branch -D`; aiming those at the tree the goal manifest checks out is
+# how uncommitted work disappears. This directory is gitignored.
+work_root = Path.join(script_dir, ".assembly-work")
 
 godot_path =
   case System.get_env("GODOT_PATH") do
-    nil ->
-      parent = Path.dirname(script_dir)
-
-      ["entities-godot-sandbox", "entities-godot", "fabric-godot-core", "godot"]
-      |> Enum.map(&Path.expand(Path.join(parent, &1)))
-      |> Enum.find(&File.dir?(Path.join(&1, ".git")))
-      |> case do
-        nil -> Path.expand(Path.join(parent, "entities-godot-sandbox"))
-        found -> found
-      end
-
-    env ->
-      Path.expand(env)
+    nil -> Path.join(work_root, "entities-godot")
+    env -> Path.expand(env)
   end
+
 assembler_path = Path.join(script_dir, "thirdparty/git-assembler")
 assembler_config = Path.join(script_dir, "gitassembly")
 
 unless File.dir?(Path.join(godot_path, ".git")) do
+  File.mkdir_p!(Path.dirname(godot_path))
   IO.puts("Cloning #{merge_remote_url} into #{godot_path}")
   {output, code} = System.cmd("git", ["clone", merge_remote_url, godot_path], stderr_to_stdout: true)
   if output != "", do: IO.puts(output)
-  if code != 0, do: raise "git clone failed (exit #{code}): #{output}"
+  if code != 0, do: raise("git clone failed (exit #{code}): #{output}")
 end
 
 File.cd!(godot_path)
