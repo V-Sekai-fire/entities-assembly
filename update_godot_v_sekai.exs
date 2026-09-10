@@ -21,7 +21,10 @@ merge_remote = "v-sekai-fire"
 merge_remote_url = "git@github.com:V-Sekai-fire/entities-godot.git"
 opentelemetry_remote = "opentelemetry-godot"
 opentelemetry_remote_url = "git@github.com:V-Sekai-fire/opentelemetry-godot.git"
-original_branch = "master"
+# Resolved from the clone's origin/HEAD after cd, not hardcoded: the engine
+# repository's default branch is not necessarily `master`, and a script that
+# assumes one name fails with "not on master branch" the day it changes.
+original_branch = nil
 merge_branch = "multiplayer-fabric"
 
 # Absolute paths resolved before cd — the assembler and config live here, all git
@@ -85,9 +88,20 @@ IO.puts("Checkout remotes")
 add_remote.(merge_remote, merge_remote_url)
 add_remote.(opentelemetry_remote, opentelemetry_remote_url)
 
+# The branch the clone landed on is the repository's default; that is the base
+# the assembly starts from and the branch cleanup returns to.
+original_branch =
+  case System.cmd("git", ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"], stderr_to_stdout: true) do
+    {ref, 0} -> ref |> String.trim() |> String.replace_prefix("origin/", "")
+    _ -> String.trim(run!.("git", ["rev-parse", "--abbrev-ref", "HEAD"]))
+  end
+
+IO.puts("Base branch: #{original_branch}")
+
 current_branch = String.trim(run!.("git", ["rev-parse", "--abbrev-ref", "HEAD"]))
+
 if current_branch != original_branch do
-  IO.puts("Failed to run merge script: not on #{original_branch} branch.")
+  IO.puts("Failed to run merge script: on #{current_branch}, expected the default branch #{original_branch}.")
   System.halt(1)
 end
 
