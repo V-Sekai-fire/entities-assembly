@@ -122,6 +122,12 @@ original_branch =
     _ -> String.trim(run!.("git", ["rev-parse", "--abbrev-ref", "HEAD"]))
   end
 
+original_branch =
+  case original_branch do
+    "main" -> "main/main"
+    other -> other
+  end
+
 IO.puts("Base branch: #{original_branch}")
 
 current_branch = String.trim(run!.("git", ["rev-parse", "--abbrev-ref", "HEAD"]))
