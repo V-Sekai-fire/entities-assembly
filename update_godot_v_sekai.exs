@@ -26,16 +26,11 @@ merge_remote = "v-sekai-fire"
 merge_remote_url = "https://github.com/V-Sekai-fire/entities-godot.git"
 opentelemetry_remote = "opentelemetry-godot"
 opentelemetry_remote_url = "https://github.com/V-Sekai-fire/opentelemetry-godot.git"
-# Resolved from the clone's origin/HEAD after cd, not hardcoded: the engine
-# repository's default branch is not necessarily `master`, and a script that
-# assumes one name fails with "not on master branch" the day it changes.
-original_branch = nil
 # Read from the assembly config's own stage line rather than duplicated here.
 # The config was renamed multiplayer-fabric -> dev/fabric-0.1.0 and this constant
 # was not, so cleanup deleted a branch that no longer existed and left the real
 # assembled branch behind -- the exact stray-branch failure the comment further
 # down warns about -- while the tag went out named after the old target.
-merge_branch = nil
 
 # Absolute paths resolved before cd — the assembler and config live here, all git
 # work happens in the disposable clone below.
