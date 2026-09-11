@@ -17,7 +17,7 @@ defmodule Assembler.MixProject do
   end
 
   # egit is an Erlang NIF over libgit2, Apache-2.0. It replaces the GPLv3
-  # thirdparty/git-assembler this repository has been carrying. Only local
+  # git-assembler it replaced is deleted; nothing GPLv3 is vendored here. Only local
   # operations go through it -- branch, merge, rebase, rev-parse -- because the
   # assembler itself makes no network calls; clone and fetch stay on system git
   # in update_godot_v_sekai.exs.

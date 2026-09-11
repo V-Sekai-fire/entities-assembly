@@ -56,7 +56,6 @@ godot_path =
     env -> Path.expand(env)
   end
 
-assembler_path = Path.join(script_dir, "thirdparty/git-assembler")
 assembler_config = Path.join(script_dir, "gitassembly")
 
 merge_branch =
@@ -162,7 +161,24 @@ run!.("git", ["stash", "--include-untracked"])
 try do
   run!.("git", ["checkout", original_branch, "--force"])
   System.cmd("git", ["branch", "-D", merge_branch], stderr_to_stdout: true)
-  run!.("python3", [assembler_path, "-av", "--recreate", "--config", assembler_config])
+  # The assembler is `Assembler.Run` in this project, invoked through mix so the
+  # script and the library are one implementation. It replaced a vendored GPLv3
+  # program; RFD 2243 set the bar at a byte-identical tree, and the swap was
+  # verified against it before the original was removed.
+  # `run!` runs in the assembly checkout; mix has to run where mix.exs is.
+  assemble_cmd = [
+    "run",
+    "-e",
+    ~s|case Assembler.Run.assemble("#{godot_path}", "#{assembler_config}") do\n| <>
+      ~s|  :ok -> :ok\n| <>
+      ~s|  {:error, why} -> IO.puts(:stderr, why); System.halt(1)\n| <>
+      ~s|end|
+  ]
+
+  case System.cmd("mix", assemble_cmd, cd: script_dir, stderr_to_stdout: true) do
+    {out, 0} -> if out != "", do: IO.puts(out)
+    {out, code} -> raise "assembly failed (exit #{code}): #{out}"
+  end
 
   tag_name =
     "v" <>
