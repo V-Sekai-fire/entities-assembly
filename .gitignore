@@ -12,3 +12,5 @@ erl_crash.dump
 
 # Burrito output
 /burrito_out/
+priv/plts/*.plt
+priv/plts/*.plt.hash

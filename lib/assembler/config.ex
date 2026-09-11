@@ -170,9 +170,20 @@ defmodule Assembler.Config do
           case expand(arg, branches) do
             [] -> {:halt, {:error, err(path, n, "pattern #{arg} in rule does not match any branch")}}
             list ->
-              case Enum.find(list, &(&1 in acc or &1 in node.merge)) do
-                nil -> {:cont, {:ok, acc ++ list}}
-                dup -> {:halt, {:error, err(path, n, "pattern #{arg} expands to #{dup}, already merged into #{node.name}")}}
+              cond do
+                # Merging a branch into one staged from it does nothing. An explicit
+                # rule saying so is a typo worth reporting; a pattern that happens to
+                # cover the base is the same typo, harder to see.
+                node.base && node.base in list ->
+                  {:halt,
+                   {:error,
+                    err(path, n, "pattern #{arg} expands to #{node.base}, the base of #{node.name}")}}
+
+                dup = Enum.find(list, &(&1 in acc or &1 in node.merge)) ->
+                  {:halt, {:error, err(path, n, "pattern #{arg} expands to #{dup}, already merged into #{node.name}")}}
+
+                true ->
+                  {:cont, {:ok, acc ++ list}}
               end
           end
       end

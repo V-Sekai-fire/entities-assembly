@@ -10,7 +10,9 @@ feature branches and pushes the result back to
   `--dry-run` is passed) force-pushes the assembled
   `multiplayer-fabric-base` and `multiplayer-fabric` branches plus a
   CalVer tag.
-- `thirdparty/git-assembler` is a vendored copy of git-assembler 1.5,
+- `lib/assembler/` is this repository's own assembler. It replaced a vendored
+  copy of git-assembler 1.5, which was GPLv3 and is gone; RFD 2243 set the bar
+  at a byte-identical tree and the swap was verified against it.
   a single Python 3 file (GPLv3). It reads `gitassembly` and performs
   the actual branch stage/merge operations.
 - `gitassembly` is the configuration. It lists upstream refs to
@@ -35,7 +37,7 @@ wrapper's remote setup, stash, and push, so both remotes must already
 be fetched:
 
 ```
-python3 ./thirdparty/git-assembler -av --recreate --config gitassembly
+mix run -e 'Assembler.Run.assemble(System.get_env("GODOT_PATH"), "gitassembly")'
 ```
 
 Uncommitted changes are stashed at the start of the run and reported
@@ -59,7 +61,7 @@ recreates them via `--recreate`. Do not pass `--dry-run` expecting
 nothing to happen locally.
 
 Conflict resolution is plain `git merge`. `gitassembly` declares no
-`ours`/`theirs`/custom merge drivers, and `git-assembler` does not
+`ours`/`theirs`/custom merge drivers, and the assembler does not
 support cherry-picking, so a conflict fails the run and the fix
 belongs on the source branch.
 
@@ -69,7 +71,7 @@ the assembler, errors go through `logging.error`.
 
 ## Updating the vendored assembler
 
-`thirdparty/git-assembler` is a single file, not a submodule and not
+`lib/assembler/` is ours, MIT like the rest of this repository. Nothing
 a directory. Its version lives in `APP_VER` inside the script
 (currently `1.5`). To update: replace the file with a newer upstream
 copy, adjust `APP_VER` to match, and verify the CLI flags the Elixir

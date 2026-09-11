@@ -28,7 +28,7 @@ references:
     title: "git-assembler: assemble git branches automatically"
     url: "https://gitlab.com/wavexx/git-assembler"
     notes: >
-      Vendored at thirdparty/git-assembler. It reads the gitassembly file and performs
+      The program this repository's assembler replaces. It read the gitassembly file and performed
       the stage and merge steps; this repository supplies the file and the driver.
 
   - type: software

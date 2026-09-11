@@ -8,7 +8,11 @@ defmodule Assembler.MixProject do
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        flags: [:error_handling, :extra_return, :missing_return, :unmatched_returns]
+      ]
     ]
   end
 
@@ -17,12 +21,13 @@ defmodule Assembler.MixProject do
   end
 
   # egit is an Erlang NIF over libgit2, Apache-2.0. It replaces the GPLv3
-  # thirdparty/git-assembler this repository has been carrying. Only local
+  # git-assembler it replaced is deleted; nothing GPLv3 is vendored here. Only local
   # operations go through it -- branch, merge, rebase, rev-parse -- because the
   # assembler itself makes no network calls; clone and fetch stay on system git
   # in update_godot_v_sekai.exs.
   defp deps do
     [
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       # Fork: upstream's commit/2 records only HEAD as a parent, so a commit
       # concluding a merge has one parent and git never sees the branch as
       # merged. The fork reads MERGE_HEAD. Patch offered upstream.
