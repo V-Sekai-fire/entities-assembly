@@ -79,13 +79,22 @@ wrapper depends on (`-av`, `--recreate`, `--config`) still exist.
 
 ## Tag format
 
-The release tag is built from the current UTC time:
+The release tag is built from the current UTC time and the current
+stage label:
 
 ```
-v<YYYY.MM.DD.HHMM>-multiplayer-fabric
+v<YYYY.MM.DD.HHMM>-main-fabric-<X.Y.Z>
 ```
+
+The `X.Y.Z` half is hand-maintained on the `stage` line of
+`gitassembly` — the assembler reads it there, prepends the UTC
+timestamp, and pushes both the branch and the tag. There is no
+automated bump rule; a coordinator advances the label when they cut
+a new assembled generation, and the previous label's branch and tag
+stay live for rollback.
 
 There is no Godot version string read from `.env` or the command
 line. The assembled tree's Godot version is whatever the first
-`stage` line in `gitassembly` points at (currently `feat/engine-misc`).
-To pin a different upstream version, change that ref.
+`stage` line in `gitassembly` points at as its base (currently
+`feat/ci-ar-response-file`). To pin a different upstream version,
+change that ref.
