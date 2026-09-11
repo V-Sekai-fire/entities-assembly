@@ -49,7 +49,7 @@ defmodule Assembler.ConfigTest do
   test "the real gitassembly parses to one stage node" do
     assert {:ok, nodes, _} = Config.parse("gitassembly")
     assert [{name, node}] = Map.to_list(nodes)
-    assert name == "main/fabric-0.1.0"
+    assert name == "main/fabric-0.2.1"
     assert node.type == :stage
     assert node.base == "remotes/v-sekai-fire/feat/ci-ar-response-file"
     assert length(node.merge) == 31
