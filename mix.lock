@@ -1,3 +1,5 @@
 %{
+  "dialyxir": {:hex, :dialyxir, "1.4.8", "7ef671a8aff9948b091d8c30f09467fbb16e77305cda451bce48109a0f5e021c", [:mix], [{:erlex, ">= 0.2.8", [hex: :erlex, repo: "hexpm", optional: false]}], "hexpm", "cbd5a851571e5dfeb32aaf2e840bfa98b7864cb3071bf2ef5d95d1276b12e072"},
   "egit": {:git, "https://github.com/V-Sekai-fire/egit.git", "ca391edb24a1c41ea29e8e15504ce9125e79b928", [branch: "merge-commit-parents"]},
+  "erlex": {:hex, :erlex, "0.2.9", "7debbbaa9f4f368b8cd648983e0f1d7963028508e9c59e9d4ed504e94ef52a55", [:mix], [], "hexpm", "8cfffc0ec7159e6d73de2ab28a588064de80f88b2798d5cbe4482cbbc200178b"},
 }

@@ -8,7 +8,11 @@ defmodule Assembler.MixProject do
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        flags: [:error_handling, :extra_return, :missing_return, :unmatched_returns]
+      ]
     ]
   end
 
@@ -23,6 +27,7 @@ defmodule Assembler.MixProject do
   # in update_godot_v_sekai.exs.
   defp deps do
     [
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       # Fork: upstream's commit/2 records only HEAD as a parent, so a commit
       # concluding a merge has one parent and git never sees the branch as
       # merged. The fork reads MERGE_HEAD. Patch offered upstream.

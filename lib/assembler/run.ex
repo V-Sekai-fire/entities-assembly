@@ -32,7 +32,8 @@ defmodule Assembler.Run do
     do: {:error, "#{node.name}: rebase is not implemented; only stage and merge are"}
 
   defp build(repo, %{type: :stage, base: base} = node) when is_binary(base) do
-    git(repo, ["branch", "-D", node.name])
+    # --recreate semantics: the branch may or may not exist, and either is fine.
+    _ = git(repo, ["branch", "-D", node.name])
 
     with :ok <- git!(repo, ["checkout", "-q", "--no-guess", "-b", node.name, base]) do
       node.merge
