@@ -27,11 +27,7 @@ defmodule Assembler.MixProject do
   # in update_godot_v_sekai.exs.
   defp deps do
     [
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      # Fork: upstream's commit/2 records only HEAD as a parent, so a commit
-      # concluding a merge has one parent and git never sees the branch as
-      # merged. The fork reads MERGE_HEAD. Patch offered upstream.
-      {:egit, github: "V-Sekai-fire/egit", branch: "merge-commit-parents"}
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
 
