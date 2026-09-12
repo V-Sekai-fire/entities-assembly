@@ -46,13 +46,20 @@ defmodule Assembler.ConfigTest do
     assert Enum.sort(nodes["main"].merge) == ["topic-b", "topic-c"]
   end
 
+  # Read against the file rather than a copy of it: the target name and the branch
+  # list move every release, and a restated pair fails on the move rather than on a bug.
   test "the real gitassembly parses to one stage node" do
+    lines = File.read!("gitassembly") |> String.split("
+", trim: true)
+    ["stage", target, base] = lines |> Enum.find(&String.starts_with?(&1, "stage ")) |> String.split()
+    merged = Enum.count(lines, &String.starts_with?(&1, "merge "))
+
     assert {:ok, nodes, _} = Config.parse("gitassembly")
     assert [{name, node}] = Map.to_list(nodes)
-    assert name == "main/fabric-0.2.2"
+    assert name == target
     assert node.type == :stage
-    assert node.base == "remotes/v-sekai-fire/feat/ci-ar-response-file"
-    assert length(node.merge) == 42
+    assert node.base == base
+    assert length(node.merge) == merged
   end
 
   test "a comment character is data, not a comment" do

@@ -9,6 +9,9 @@ defmodule Assembler.RunTest do
     on_exit(fn -> File.rm_rf!(dir) end)
     git(dir, ["init", "-q", "-b", "base"])
     git(dir, ["config", "user.email", "t@example.com"])
+    # Windows desks default to core.autocrlf=true, which would have the fixture read
+    # back what checkout rewrote rather than what the merge produced.
+    git(dir, ["config", "core.autocrlf", "false"])
     git(dir, ["config", "user.name", "t"])
     commit(dir, "shared", "0\n", "root")
     for b <- ~w(topic-a topic-b) do

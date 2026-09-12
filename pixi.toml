@@ -1,0 +1,11 @@
+[workspace]
+name = "entities-assembly"
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-arm64"]
+
+[dependencies]
+libgit2 = "==1.9.7"
+pkg-config = "*"
+
+[target.win-64.dependencies]
+vs2022_win-64 = "*"

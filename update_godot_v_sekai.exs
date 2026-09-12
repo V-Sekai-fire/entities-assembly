@@ -83,6 +83,10 @@ unless File.dir?(Path.join(godot_path, ".git")) do
   if code != 0, do: raise("git clone failed (exit #{code}): #{output}")
 end
 
+# Windows git defaults core.autocrlf to true, which rewrites line endings under every
+# merge and leaves an assembled tree that does not match the one assembled elsewhere.
+System.cmd("git", ["-C", godot_path, "config", "core.autocrlf", "false"], stderr_to_stdout: true)
+
 File.cd!(godot_path)
 
 # Safety guard: abort if git thinks we are anywhere other than godot/.
@@ -167,13 +171,13 @@ try do
   # program; RFD 2243 set the bar at a byte-identical tree, and the swap was
   # verified against it before the original was removed.
   # `run!` runs in the assembly checkout; mix has to run where mix.exs is.
+  # One line, no newlines: on Windows mix is a .bat file and cmd.exe truncates an
+  # argument at the first newline, so a multi-line expression arrived unterminated.
   assemble_cmd = [
     "run",
     "-e",
-    ~s|case Assembler.Run.assemble("#{godot_path}", "#{assembler_config}") do\n| <>
-      ~s|  :ok -> :ok\n| <>
-      ~s|  {:error, why} -> IO.puts(:stderr, why); System.halt(1)\n| <>
-      ~s|end|
+    ~s|case Assembler.Run.assemble("#{godot_path}", "#{assembler_config}") do | <>
+      ~s|:ok -> :ok; {:error, why} -> IO.puts(:stderr, why); System.halt(1) end|
   ]
 
   case System.cmd("mix", assemble_cmd, cd: script_dir, stderr_to_stdout: true) do

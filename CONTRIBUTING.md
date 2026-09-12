@@ -43,6 +43,25 @@ mix run -e 'Assembler.Run.assemble(System.get_env("GODOT_PATH"), "gitassembly")'
 Uncommitted changes are stashed at the start of the run and reported
 at the end.
 
+## Windows
+
+The egit NIF links libgit2, and `pixi.toml` declares what that needs:
+libgit2 itself, pkg-config, and `vs2022_win-64`, which points the build at
+an installed Visual Studio 2022. So every command above runs under `pixi run` on Windows:
+
+```
+pixi run mix test
+pixi run elixir update_godot_v_sekai.exs --dry-run
+```
+
+Outside the pixi environment the NIF's Makefile finds no libgit2 and says
+so rather than linking something else. Nothing here is Windows-only at
+runtime; the same `pixi run` prefix works on Linux and macOS.
+
+Set `core.autocrlf=false` in the assembly checkout. With the Windows git
+default of `true`, checkout rewrites line endings under the merges and the
+assembled tree stops matching the tree assembled anywhere else.
+
 ## How the assembler behaves
 
 Running the assembler twice with the same inputs produces the same
