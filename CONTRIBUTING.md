@@ -47,8 +47,7 @@ at the end.
 
 The egit NIF links libgit2, and `pixi.toml` declares what that needs:
 libgit2 itself, pkg-config, and `vs2022_win-64`, which points the build at
-an installed Visual Studio 2022. So every command above runs under `pixi
-run` on Windows:
+an installed Visual Studio 2022. So every command above runs under `pixi run` on Windows:
 
 ```
 pixi run mix test

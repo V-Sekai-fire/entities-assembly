@@ -1,0 +1,47 @@
+# The format workflow explains what is deliberately not built here: the driver
+# force-pushes assembled branches to a real remote, so CI does not run it. `mix test`
+# is another matter -- its fixtures are throwaway repositories in a temp directory --
+# and the NIF those tests link had no Windows build at all until now, which is the
+# thing most worth a runner.
+name: test
+
+on:
+  push:
+    branches: [main/main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "29"
+          elixir-version: "1.20"
+
+      # libgit2, pkg-config, and on Windows the MSVC activation the NIF's Makefile
+      # needs. `locked: true` fails rather than re-solving when pixi.lock is stale.
+      - uses: prefix-dev/setup-pixi@v0.9.0
+        with:
+          locked: true
+
+      - name: Dependencies, including the egit NIF
+        run: pixi run mix deps.get
+
+      - name: The assembler's own tests
+        run: pixi run mix test
+
+      # Proves the driver parses and runs on this platform without touching a remote.
+      - name: The driver starts
+        run: pixi run elixir update_godot_v_sekai.exs --help
