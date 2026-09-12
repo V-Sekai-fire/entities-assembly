@@ -26,6 +26,7 @@ merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/assets
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/citation
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/game
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/module-sandbox
+merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/module-godot-mcp
 
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/module-ggml
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/module-motion-bricks
