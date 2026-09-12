@@ -30,8 +30,10 @@ defmodule Assembler.MixProject do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       # Fork: upstream's commit/2 records only HEAD as a parent, so a commit
       # concluding a merge has one parent and git never sees the branch as
-      # merged. The fork reads MERGE_HEAD. Patch offered upstream.
-      {:egit, github: "V-Sekai-fire/egit", branch: "merge-commit-parents"}
+      # merged. The fork reads MERGE_HEAD. Patch offered upstream. The branch
+      # also carries the MSVC build of the NIF, without which there is no
+      # Windows build at all.
+      {:egit, github: "V-Sekai-fire/egit", branch: "windows-msvc-build"}
     ]
   end
 
