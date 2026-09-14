@@ -48,3 +48,9 @@ merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/server-rendering
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/csg
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/physics-3d
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/build-scripts
+
+merge main/fabric-0.2.4 remotes/v-sekai-fire/rfd-2251/pixal3d-image-to-glb
+merge main/fabric-0.2.4 remotes/v-sekai-fire/rfd-2251/pixal3d-pipeline-residency
+merge main/fabric-0.2.4 remotes/v-sekai-fire/rfd-2251/skin-tokens-rig
+merge main/fabric-0.2.4 remotes/v-sekai-fire/rfd-2251/kimodo-generate
+merge main/fabric-0.2.4 remotes/v-sekai-fire/rfd-2251/kimodo-pipeline-residency
