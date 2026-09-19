@@ -30,4 +30,3 @@ merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/resource-loading
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/scene-misc
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/server-rendering
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/physics-3d
-
