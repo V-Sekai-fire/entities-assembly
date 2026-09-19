@@ -1,5 +1,11 @@
 stage main/fabric-0.2.4 remotes/v-sekai-fire/feat/ci-ar-response-file
 
+merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/vendor-sdl
+merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/vendor-glslang
+merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/vendor-metal-cpp
+merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/vendor-eigen
+merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/vendor-predictive-bvh
+
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/d3d12-download-retry
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/lint-cleanup
 merge main/fabric-0.2.4 remotes/v-sekai-fire/feat/ci-fixes
