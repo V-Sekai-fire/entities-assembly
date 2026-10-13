@@ -102,7 +102,7 @@ The release tag is built from the current UTC time and the current
 stage label:
 
 ```
-v<YYYY.MM.DD.HHMM>-main-fabric-<X.Y.Z>
+v<YYYY.MM.DD.HHMM>-dev-fabric-<X.Y.Z>
 ```
 
 The `X.Y.Z` half is hand-maintained on the `stage` line of
