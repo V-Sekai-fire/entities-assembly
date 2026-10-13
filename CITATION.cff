@@ -6,7 +6,7 @@ abstract: >
   multiplayer-fabric Godot fork from upstream feature branches and pushes the result
   to entities-godot: a gitassembly file naming each branch and how it is merged, and
   an Elixir driver that runs the assembler and force-pushes the assembled branches
-  and a CalVer tag. A merge order is a decision, and keeping it in a file makes it
+  and a tag computed from the assembled commit. A merge order is a decision, and keeping it in a file makes it
   one that can be read and argued with rather than one held in somebody's shell
   history.
 authors:
@@ -14,8 +14,6 @@ authors:
     given-names: "K. S. Ernest (iFire)"
     email: ernest.lee@chibifire.com
     orcid: "https://orcid.org/0000-0003-4570-1436"
-version: 0.1.0-dev.1
-date-released: "2026-08-17"
 license: MIT
 repository-code: "https://github.com/v-sekai-multiplayer-fabric/entities-assembly"
 keywords:
