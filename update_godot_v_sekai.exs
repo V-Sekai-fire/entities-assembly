@@ -179,18 +179,18 @@ try do
     {out, code} -> raise "assembly failed (exit #{code}): #{out}"
   end
 
-  tag_name =
-    "v" <>
-      (DateTime.utc_now()
-       |> Calendar.strftime("%Y.%m.%d.%H%M")) <>
-      # Slashes are legal in a tag but would nest it under a namespace, and every
-      # existing tag is flat (v2026.05.20.1550-multiplayer-fabric). The branch
-      # keeps its slash; only the tag suffix is flattened.
-      "-" <> String.replace(merge_branch, "/", "-")
-
   if not dry_run do
     run!.("git", ["checkout", merge_branch, "-f"])
     run!.("git", ["commit", "--allow-empty", "-m", "Merge branch '#{merge_branch}'"])
+
+    # RFD 2312: the tag is computed from the commit; the stage lives in the branch.
+    {stamp, 0} =
+      System.cmd("git", ["log", "-1", "--format=%cd %H", "--date=format-local:%Y%m%d%H%M%S"],
+        env: [{"TZ", "UTC"}]
+      )
+
+    [time, sha] = String.split(String.trim(stamp), " ")
+    tag_name = "v0.0.0-#{time}-#{String.slice(sha, 0, 12)}"
 
     # Tag the assembled state, then move the branch to it. The tag is the
     # durable artifact and every prior assembly keeps its own, so advancing the
@@ -219,7 +219,7 @@ try do
     run!.("git", push_args)
     IO.puts("Pushed branch #{merge_branch}.")
   else
-    IO.puts("Dry run: would tag as #{tag_name} and move #{merge_branch} to it (no push).")
+    IO.puts("Dry run: would tag the assembled commit and move #{merge_branch} to it (no push).")
   end
 rescue
   e ->

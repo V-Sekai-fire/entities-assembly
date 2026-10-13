@@ -9,7 +9,7 @@ feature branches and pushes the result back to
   `opentelemetry-godot` remotes, invokes the assembler, and (unless
   `--dry-run` is passed) force-pushes the assembled
   `multiplayer-fabric-base` and `multiplayer-fabric` branches plus a
-  CalVer tag.
+  release tag computed from the assembled commit (RFD 2312).
 - `lib/assembler/` is this repository's own assembler. It replaced a vendored
   copy of git-assembler 1.5, which was GPLv3 and is gone; RFD 2243 set the bar
   at a byte-identical tree and the swap was verified against it.
@@ -65,7 +65,8 @@ assembled tree stops matching the tree assembled anywhere else.
 ## How the assembler behaves
 
 Running the assembler twice with the same inputs produces the same
-tree; the only thing that changes between runs is the timestamped tag.
+tree; the only thing that changes between runs is the tag, because the
+assembled commit carries the time it was made.
 If a step turns out to be non-deterministic, fix it before merging
 rather than working around it.
 
@@ -98,19 +99,17 @@ wrapper depends on (`-av`, `--recreate`, `--config`) still exist.
 
 ## Tag format
 
-The release tag is built from the current UTC time and the current
-stage label:
+The assembled branch name is the only hand-kept version: the `stage`
+line of `gitassembly` names it, stage first (`dev/fabric-<X.Y.Z>`). A
+coordinator advances it when they cut a new assembled generation, and
+the previous branch and its tags stay live for rollback.
+
+The tag is computed from the assembled commit, never typed, in the
+form RFD 2312 sets for every release tag:
 
 ```
-v<YYYY.MM.DD.HHMM>-dev-fabric-<X.Y.Z>
+v0.0.0-<UTC committer time YYYYMMDDhhmmss>-<first 12 hex of the commit>
 ```
-
-The `X.Y.Z` half is hand-maintained on the `stage` line of
-`gitassembly` — the assembler reads it there, prepends the UTC
-timestamp, and pushes both the branch and the tag. There is no
-automated bump rule; a coordinator advances the label when they cut
-a new assembled generation, and the previous label's branch and tag
-stay live for rollback.
 
 There is no Godot version string read from `.env` or the command
 line. The assembled tree's Godot version is whatever the first
