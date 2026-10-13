@@ -115,5 +115,5 @@ stay live for rollback.
 There is no Godot version string read from `.env` or the command
 line. The assembled tree's Godot version is whatever the first
 `stage` line in `gitassembly` points at as its base (currently
-`feat/ci-ar-response-file`). To pin a different upstream version,
+`dev/ci-ar-response-file`). To pin a different upstream version,
 change that ref.
