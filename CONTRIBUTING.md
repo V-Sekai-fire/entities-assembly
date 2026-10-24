@@ -9,9 +9,9 @@ feature branches and pushes the result back to
   `opentelemetry-godot` remotes, invokes the assembler, and (unless
   `--dry-run` is passed) force-pushes the assembled
   `multiplayer-fabric-base` and `multiplayer-fabric` branches plus a
-  release tag computed from the assembled commit (RFD 2312).
+  release tag computed from the assembled commit (RFD66606-2312).
 - `lib/assembler/` is this repository's own assembler. It replaced a vendored
-  copy of git-assembler 1.5, which was GPLv3 and is gone; RFD 2243 set the bar
+  copy of git-assembler 1.5, which was GPLv3 and is gone; RFD66606-2243 set the bar
   at a byte-identical tree and the swap was verified against it.
   a single Python 3 file (GPLv3). It reads `gitassembly` and performs
   the actual branch stage/merge operations.
@@ -105,7 +105,7 @@ coordinator advances it when they cut a new assembled generation, and
 the previous branch and its tags stay live for rollback.
 
 The tag is computed from the assembled commit, never typed, in the
-form RFD 2312 sets for every release tag:
+form RFD66606-2312 sets for every release tag:
 
 ```
 v0.0.0-<UTC committer time YYYYMMDDhhmmss>-<first 12 hex of the commit>
