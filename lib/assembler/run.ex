@@ -2,7 +2,7 @@ defmodule Assembler.Run do
   @moduledoc """
   Execute a parsed `gitassembly` against a checkout.
 
-  The git commands match what `git-assembler` issued, because the bar RFD 2243
+  The git commands match what `git-assembler` issued, because the bar RFD66606-2243
   sets for this replacement is a byte-identical tree rather than a similar one:
   bootstrap with `checkout --no-guess -b`, then `merge --rerere-autoupdate
   --no-edit` per dependency in declared order, and a dependency that is the

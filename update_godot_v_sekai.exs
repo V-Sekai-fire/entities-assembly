@@ -162,7 +162,7 @@ try do
   System.cmd("git", ["branch", "-D", merge_branch], stderr_to_stdout: true)
   # The assembler is `Assembler.Run` in this project, invoked through mix so the
   # script and the library are one implementation. It replaced a vendored GPLv3
-  # program; RFD 2243 set the bar at a byte-identical tree, and the swap was
+  # program; RFD66606-2243 set the bar at a byte-identical tree, and the swap was
   # verified against it before the original was removed.
   # `run!` runs in the assembly checkout; mix has to run where mix.exs is.
   # One line, no newlines: on Windows mix is a .bat file and cmd.exe truncates an
@@ -183,7 +183,7 @@ try do
     run!.("git", ["checkout", merge_branch, "-f"])
     run!.("git", ["commit", "--allow-empty", "-m", "Merge branch '#{merge_branch}'"])
 
-    # RFD 2312: the tag is computed from the commit; the stage lives in the branch.
+    # RFD66606-2312: the tag is computed from the commit; the stage lives in the branch.
     {stamp, 0} =
       System.cmd("git", ["log", "-1", "--format=%cd %H", "--date=format-local:%Y%m%d%H%M%S"],
         env: [{"TZ", "UTC"}]
