@@ -11,6 +11,7 @@ if Enum.any?(argv, &(&1 in ["-h", "--help"])) do
   --only=<release> Tag and publish only this release. Every stage is still built, because the
                    releases are nested. One of the `stage` lines in gitassembly:
                      r0-base, r1-see, r2-hear, r3-wear, r4-party
+                   Or `all` to publish every release. Default: the newest, r4-party.
   """)
   System.halt(0)
 end
@@ -107,14 +108,19 @@ IO.puts("Releases, in build order: #{Enum.join(releases, " -> ")}")
 # Releases are nested, so all of them are built; --only limits which ones are tagged and pushed.
 published =
   case only_release do
-    nil ->
+    "all" ->
       releases
+
+    # The releases are nested and listed base first, so the last one holds the code of every
+    # other. Publishing it alone is the default.
+    nil ->
+      [List.last(releases)]
 
     name ->
       if name in releases do
         [name]
       else
-        IO.puts("Error: --only=#{name} is not one of: #{Enum.join(releases, ", ")}")
+        IO.puts("Error: --only=#{name} is not one of: all, #{Enum.join(releases, ", ")}")
         System.halt(1)
       end
   end
