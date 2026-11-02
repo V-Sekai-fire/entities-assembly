@@ -1,6 +1,5 @@
 stage r0-base remotes/v-sekai-fire/main
 
-merge r0-base remotes/v-sekai-fire/dev/sdl
 merge r0-base remotes/v-sekai-fire/dev/glslang
 merge r0-base remotes/v-sekai-fire/dev/metal-cpp
 merge r0-base remotes/v-sekai-fire/dev/eigen
