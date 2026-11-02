@@ -99,13 +99,12 @@ wrapper depends on (`-av`, `--recreate`, `--config`) still exist.
 
 ## Tag format
 
-The assembled branch name is the only hand-kept version: the `stage`
-line of `gitassembly` names it, stage first (`dev/fabric-<X.Y.Z>`). A
-coordinator advances it when they cut a new assembled generation, and
-the previous branch and its tags stay live for rollback.
-
-The tag is computed from the assembled commit, never typed, in the
-form RFD66606-2312 sets for every release tag:
+No version is kept by hand. The `stage` line of `gitassembly` names a
+local work branch (`assembly`) that is never pushed. After every branch
+is merged, the tag is computed from the last commit of the chain, never
+typed, in the form RFD66606-2312 sets for every release tag. Its time
+is that commit's committer time. Every earlier tag stays live for
+rollback.
 
 ```
 v0.0.0-<UTC committer time YYYYMMDDhhmmss>-<first 12 hex of the commit>

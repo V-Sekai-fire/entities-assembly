@@ -181,45 +181,36 @@ try do
 
   if not dry_run do
     run!.("git", ["checkout", merge_branch, "-f"])
-    run!.("git", ["commit", "--allow-empty", "-m", "Merge branch '#{merge_branch}'"])
 
-    # RFD66606-2312: the tag is computed from the commit; the stage lives in the branch.
+    # RFD66606-2312: the tag is computed from the commit. The commit is the last
+    # one in the merged chain (HEAD), with no extra commit added on top, and the
+    # time is that same commit's committer time in UTC.
     {stamp, 0} =
-      System.cmd("git", ["log", "-1", "--format=%cd %H", "--date=format-local:%Y%m%d%H%M%S"],
+      System.cmd("git", ["log", "-1", "--format=%cd %H", "--date=format-local:%Y%m%d%H%M%S", "HEAD"],
         env: [{"TZ", "UTC"}]
       )
 
     [time, sha] = String.split(String.trim(stamp), " ")
     tag_name = "v0.0.0-#{time}-#{String.slice(sha, 0, 12)}"
 
-    # Tag the assembled state, then move the branch to it. The tag is the
-    # durable artifact and every prior assembly keeps its own, so advancing the
-    # branch discards no history. Publishing only the tag left the branch the
-    # config names existing nowhere but a gitignored work directory.
-    run!.("git", ["tag", "-a", tag_name, "-m", "#{merge_branch} #{tag_name}"])
-    run!.("git", ["push", merge_remote, tag_name])
+    # `merge_branch` is only a local work name from the `stage` line. Every
+    # branch is merged first; the version is then computed from the last commit
+    # of the chain, so it is never typed and never in the config. The tag is the
+    # published artifact and every assembly keeps its own. No branch is pushed:
+    # a branch named like the tag would make `git push <name>` ambiguous.
+    # Record which gitassembly produced this tag: the merge order is not in the
+    # commit, so without this the tag cannot be rebuilt.
+    {assembly_sha, 0} = System.cmd("git", ["-C", script_dir, "rev-parse", "HEAD"])
+    assembly_sha = String.trim(assembly_sha)
+
+    {dirty, 0} = System.cmd("git", ["-C", script_dir, "status", "--porcelain", "--", "gitassembly", "lib"])
+    if String.trim(dirty) != "", do: raise("gitassembly or lib/ has uncommitted changes; commit them so the tag can name them")
+
+    run!.("git", ["tag", "-a", tag_name, "-m", "#{merge_branch} #{tag_name}\n\nentities-assembly: #{assembly_sha}"])
+    run!.("git", ["push", merge_remote, "refs/tags/#{tag_name}"])
     IO.puts("Pushed tag #{tag_name}.")
-
-    # A lease needs a remote-tracking ref to compare against, so a branch that
-    # does not exist upstream yet is pushed plainly; one that does is pushed
-    # against the value fetched at the start of this run, which fails rather
-    # than overwrites if somebody else moved it meanwhile.
-    remote_ref = "refs/remotes/#{merge_remote}/#{merge_branch}"
-
-    push_args =
-      case System.cmd("git", ["rev-parse", "--verify", "--quiet", remote_ref], stderr_to_stdout: true) do
-        {sha, 0} ->
-          ["push", "--force-with-lease=#{merge_branch}:#{String.trim(sha)}", merge_remote,
-           "#{merge_branch}:refs/heads/#{merge_branch}"]
-
-        _ ->
-          ["push", merge_remote, "#{merge_branch}:refs/heads/#{merge_branch}"]
-      end
-
-    run!.("git", push_args)
-    IO.puts("Pushed branch #{merge_branch}.")
   else
-    IO.puts("Dry run: would tag the assembled commit and move #{merge_branch} to it (no push).")
+    IO.puts("Dry run: would tag the last commit of the assembled chain with a pseudo-version (no push).")
   end
 rescue
   e ->
