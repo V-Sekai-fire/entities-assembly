@@ -13,8 +13,6 @@ feature branches and pushes the result back to
 - `lib/assembler/` is this repository's own assembler. It replaced a vendored
   copy of git-assembler 1.5, which was GPLv3 and is gone; RFD66606-2243 set the bar
   at a byte-identical tree and the swap was verified against it.
-  a single Python 3 file (GPLv3). It reads `gitassembly` and performs
-  the actual branch stage/merge operations.
 - `gitassembly` is the configuration. It lists upstream refs to
   assemble, one operation per line.
 
@@ -43,20 +41,13 @@ mix run -e 'Assembler.Run.assemble(System.get_env("GODOT_PATH"), "gitassembly")'
 Uncommitted changes are stashed at the start of the run and reported
 at the end.
 
-## Windows
+## Dependencies
 
-The egit NIF links libgit2, and `pixi.toml` declares what that needs:
-libgit2 itself, pkg-config, and `vs2022_win-64`, which points the build at
-an installed Visual Studio 2022. So every command above runs under `pixi run` on Windows:
-
-```
-pixi run mix test
-pixi run elixir update_godot_v_sekai.exs --dry-run
-```
-
-Outside the pixi environment the NIF's Makefile finds no libgit2 and says
-so rather than linking something else. Nothing here is Windows-only at
-runtime; the same `pixi run` prefix works on Linux and macOS.
+Elixir and a system `git` on the path, on Windows, Linux and macOS
+alike. Every git operation, in the assembler and the driver, is a `git`
+process (`System.cmd`): a failing git returns an exit code instead of
+crashing the VM, and there is no native library to build. The cost is a
+process spawn per call and parsing git's text output.
 
 Set `core.autocrlf=false` in the assembly checkout. With the Windows git
 default of `true`, checkout rewrites line endings under the merges and the
@@ -97,21 +88,41 @@ a directory. Its version lives in `APP_VER` inside the script
 copy, adjust `APP_VER` to match, and verify the CLI flags the Elixir
 wrapper depends on (`-av`, `--recreate`, `--config`) still exist.
 
-## Tag format
+## Releases and tags
 
-No version is kept by hand. The `stage` line of `gitassembly` names a
-local work branch (`assembly`) that is never pushed. After every branch
-is merged, the tag is computed from the last commit of the chain, never
-typed, in the form RFD66606-2312 sets for every release tag. Its time
-is that commit's committer time. Every earlier tag stays live for
-rollback.
+`gitassembly` holds five nested releases, one `stage` block each, in
+the order RFD66606-2360 lists the beta's features:
+
+```
+r0-base   the monolithic engine and every branch not tied to a feature
+r1-see    + see each other           (stage r1-see r0-base)
+r2-hear   + hear each other          (stage r2-hear r1-see)
+r3-wear   + draw and wear            (stage r3-wear r2-hear)
+r4-party  + party and shopkeeper     (stage r4-party r3-wear)
+```
+
+A release whose base is another release is built on it, whatever the
+file order (`Assembler.Run.order/1`); a cycle is refused. A conflict
+fails the run and names the release it happened in.
+
+No version is kept by hand. Release branches are local work names and
+are never pushed. Each release is tagged from its own last commit, in
+the form RFD66606-2312 sets for every release tag, with that commit's
+committer time:
 
 ```
 v0.0.0-<UTC committer time YYYYMMDDhhmmss>-<first 12 hex of the commit>
 ```
 
-There is no Godot version string read from `.env` or the command
-line. The assembled tree's Godot version is whatever the first
-`stage` line in `gitassembly` points at as its base (currently
-`dev/ci-ar-response-file`). To pin a different upstream version,
-change that ref.
+The tag message names the release and the `entities-assembly` commit
+that produced it. `stage/<release>` is a moving tag pointing at the
+release's latest build; promotion moves it, nothing is rebuilt. Every
+earlier pseudo-version tag stays live for rollback.
+
+Merges take the newest committer time among the release's base and
+merged tips and the v-sekai-fire-persona bot identity, use `--no-ff`,
+and run with rerere disabled, so the same inputs give the same hashes
+on any machine.
+
+The engine's Godot version is whatever `r0-base` stages on (currently
+`main`). To pin a different upstream version, change that ref.
