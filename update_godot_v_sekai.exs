@@ -4,15 +4,23 @@ argv = System.argv()
 
 if Enum.any?(argv, &(&1 in ["-h", "--help"])) do
   IO.puts("""
-  Usage: elixir #{__ENV__.file} [--help|-h] [--dry-run|--no-push|-n]
+  Usage: elixir #{__ENV__.file} [--help|-h] [--dry-run|--no-push|-n] [--only=<release>]
 
   --help, -h       Display help
   --dry-run, -n    Do not push.
+  --only=<release> Tag and publish only this release, for example r4-party. Every stage is
+                   still built, because the releases are nested.
   """)
   System.halt(0)
 end
 
 dry_run = Enum.any?(argv, &(&1 in ["-n", "--no-push", "--dry-run"]))
+
+only_release =
+  Enum.find_value(argv, fn
+    "--only=" <> name -> name
+    _ -> nil
+  end)
 
 # HTTPS, not SSH. Everything else in this workspace authenticates to github.com
 # with the v-sekai-fire-persona installation token through the git credential
@@ -94,6 +102,23 @@ releases =
   end
 
 IO.puts("Releases, in build order: #{Enum.join(releases, " -> ")}")
+
+# Releases are nested, so all of them are built; --only limits which ones are tagged and pushed.
+published =
+  case only_release do
+    nil ->
+      releases
+
+    name ->
+      if name in releases do
+        [name]
+      else
+        IO.puts("Error: --only=#{name} is not one of: #{Enum.join(releases, ", ")}")
+        System.halt(1)
+      end
+  end
+
+IO.puts("Publishing: #{Enum.join(published, ", ")}")
 
 unless File.dir?(Path.join(godot_path, ".git")) do
   File.mkdir_p!(Path.dirname(godot_path))
@@ -215,7 +240,7 @@ try do
     # never pushed; the pseudo-version tag is the published artifact, and
     # `stage/<release>` is the moving tag that names the build the release
     # holds. The prefix keeps it from colliding with the local branch name.
-    Enum.each(releases, fn release ->
+    Enum.each(published, fn release ->
       {stamp, 0} =
         System.cmd("git", ["log", "-1", "--format=%cd %H", "--date=format-local:%Y%m%d%H%M%S", "refs/heads/#{release}"],
           env: [{"TZ", "UTC"}]
@@ -231,7 +256,7 @@ try do
       IO.puts("Pushed #{tag_name} and moved stage/#{release} to it.")
     end)
   else
-    IO.puts("Dry run: would tag each release (#{Enum.join(releases, ", ")}) with a pseudo-version and move its stage tag (no push).")
+    IO.puts("Dry run: would tag each published release (#{Enum.join(published, ", ")}) with a pseudo-version and move its stage tag (no push).")
   end
 rescue
   e ->
