@@ -15,9 +15,9 @@ defmodule Assembler.Run do
   alias Assembler.Config
 
   def assemble(repo, config_path) do
-    with {:ok, nodes, _settings} <- Config.parse(config_path) do
-      nodes
-      |> Map.values()
+    with {:ok, nodes, _settings} <- Config.parse(config_path),
+         {:ok, ordered} <- order(nodes) do
+      ordered
       |> Enum.reduce_while(:ok, fn node, :ok ->
         case build(repo, node) do
           :ok -> {:cont, :ok}
@@ -26,6 +26,51 @@ defmodule Assembler.Run do
       end)
     end
   end
+
+  @doc """
+  Nodes in build order: a node whose base is another node comes after it, so a
+  nested release (`stage r1-see r0-base`) is built on the branch its base just
+  produced. Ties keep name order, so the order never depends on map layout.
+  A cycle is an error naming the nodes in it.
+  """
+  def order(nodes) do
+    nodes
+    |> Map.keys()
+    |> Enum.sort()
+    |> Enum.reduce_while({:ok, [], MapSet.new()}, fn name, {:ok, acc, done} ->
+      case visit(nodes, name, [], acc, done) do
+        {:ok, acc, done} -> {:cont, {:ok, acc, done}}
+        err -> {:halt, err}
+      end
+    end)
+    |> case do
+      {:ok, acc, _done} -> {:ok, Enum.reverse(acc)}
+      err -> err
+    end
+  end
+
+  defp visit(nodes, name, path, acc, done) do
+    cond do
+      MapSet.member?(done, name) ->
+        {:ok, acc, done}
+
+      name in path ->
+        cycle = Enum.reverse([name | path]) |> Enum.drop_while(&(&1 != name))
+        {:error, "stage cycle: #{Enum.join(cycle, " -> ")}"}
+
+      true ->
+        node = Map.fetch!(nodes, name)
+
+        with {:ok, acc, done} <- visit_base(nodes, node.base, [name | path], acc, done) do
+          {:ok, [node | acc], MapSet.put(done, name)}
+        end
+    end
+  end
+
+  defp visit_base(nodes, base, path, acc, done) when is_map_key(nodes, base),
+    do: visit(nodes, base, path, acc, done)
+
+  defp visit_base(_nodes, _base, _path, acc, done), do: {:ok, acc, done}
 
   defp build(_repo, %{type: :rebase} = node),
     do: {:error, "#{node.name}: rebase is not implemented; only stage and merge are"}

@@ -53,27 +53,43 @@ godot_path =
 
 assembler_config = Path.join(script_dir, "gitassembly")
 
-merge_branch =
+# Every `stage` line is a release. A release whose base is another release is
+# nested on it (`stage r1-see r0-base`), so releases are ordered base first --
+# the same order `Assembler.Run.order/1` builds them in.
+releases =
   case File.read(assembler_config) do
     {:ok, text} ->
-      text
-      |> String.split("\n")
-      |> Enum.find_value(fn line ->
-        case String.split(String.trim(line), ~r/\s+/) do
-          ["stage", target | _] -> target
-          _ -> nil
-        end
+      stages =
+        text
+        |> String.split("\n")
+        |> Enum.flat_map(fn line ->
+          case String.split(String.trim(line), ~r/\s+/) do
+            ["stage", target, base | _] -> [{target, base}]
+            _ -> []
+          end
+        end)
+
+      if stages == [], do: raise("no `stage` line in #{assembler_config}; cannot tell which branch is assembled")
+
+      names = MapSet.new(stages, &elem(&1, 0))
+
+      Stream.unfold({stages, MapSet.new()}, fn
+        {[], _done} ->
+          nil
+
+        {pending, done} ->
+          case Enum.find(pending, fn {_t, base} -> not MapSet.member?(names, base) or MapSet.member?(done, base) end) do
+            nil -> raise "stage cycle among #{inspect(Enum.map(pending, &elem(&1, 0)))}"
+            {t, _} = ready -> {t, {List.delete(pending, ready), MapSet.put(done, t)}}
+          end
       end)
-      |> case do
-        nil -> raise "no `stage` line in #{assembler_config}; cannot tell which branch is assembled"
-        target -> target
-      end
+      |> Enum.to_list()
 
     {:error, reason} ->
       raise "cannot read #{assembler_config}: #{inspect(reason)}"
   end
 
-IO.puts("Assembled branch: #{merge_branch}")
+IO.puts("Releases, in build order: #{Enum.join(releases, " -> ")}")
 
 unless File.dir?(Path.join(godot_path, ".git")) do
   File.mkdir_p!(Path.dirname(godot_path))
@@ -146,20 +162,20 @@ has_changes =
 # Always return to the base branch and drop the local assembly branch — on
 # success, on a dry run, AND on failure. Order matters: you cannot delete the
 # branch you are on, so check out `original_branch` FIRST, then delete
-# `merge_branch`. Both steps are non-fatal (System.cmd, not run!) so a half-built
+# every release branch. Both steps are non-fatal (System.cmd, not run!) so a half-built
 # assembly still leaves the checkout clean and back on `original_branch` with no
-# stray `merge_branch` left behind — that leftover branch was the root of the
+# stray release branch left behind — that leftover branch was the root of the
 # branch-state problems.
 cleanup = fn ->
   System.cmd("git", ["checkout", original_branch, "--force"], stderr_to_stdout: true)
-  System.cmd("git", ["branch", "-D", merge_branch], stderr_to_stdout: true)
+  Enum.each(releases, &System.cmd("git", ["branch", "-D", &1], stderr_to_stdout: true))
 end
 
 run!.("git", ["stash", "--include-untracked"])
 
 try do
   run!.("git", ["checkout", original_branch, "--force"])
-  System.cmd("git", ["branch", "-D", merge_branch], stderr_to_stdout: true)
+  Enum.each(releases, &System.cmd("git", ["branch", "-D", &1], stderr_to_stdout: true))
   # The assembler is `Assembler.Run` in this project, invoked through mix so the
   # script and the library are one implementation. It replaced a vendored GPLv3
   # program; RFD66606-2243 set the bar at a byte-identical tree, and the swap was
@@ -180,37 +196,37 @@ try do
   end
 
   if not dry_run do
-    run!.("git", ["checkout", merge_branch, "-f"])
-
-    # RFD66606-2312: the tag is computed from the commit. The commit is the last
-    # one in the merged chain (HEAD), with no extra commit added on top, and the
-    # time is that same commit's committer time in UTC.
-    {stamp, 0} =
-      System.cmd("git", ["log", "-1", "--format=%cd %H", "--date=format-local:%Y%m%d%H%M%S", "HEAD"],
-        env: [{"TZ", "UTC"}]
-      )
-
-    [time, sha] = String.split(String.trim(stamp), " ")
-    tag_name = "v0.0.0-#{time}-#{String.slice(sha, 0, 12)}"
-
-    # `merge_branch` is only a local work name from the `stage` line. Every
-    # branch is merged first; the version is then computed from the last commit
-    # of the chain, so it is never typed and never in the config. The tag is the
-    # published artifact and every assembly keeps its own. No branch is pushed:
-    # a branch named like the tag would make `git push <name>` ambiguous.
-    # Record which gitassembly produced this tag: the merge order is not in the
-    # commit, so without this the tag cannot be rebuilt.
+    # Record which gitassembly produced these tags: the merge order is not in
+    # the commits, so without this a tag cannot be rebuilt.
     {assembly_sha, 0} = System.cmd("git", ["-C", script_dir, "rev-parse", "HEAD"])
     assembly_sha = String.trim(assembly_sha)
 
     {dirty, 0} = System.cmd("git", ["-C", script_dir, "status", "--porcelain", "--", "gitassembly", "lib"])
     if String.trim(dirty) != "", do: raise("gitassembly or lib/ has uncommitted changes; commit them so the tag can name them")
 
-    run!.("git", ["tag", "-a", tag_name, "-m", "#{merge_branch} #{tag_name}\n\nentities-assembly: #{assembly_sha}"])
-    run!.("git", ["push", merge_remote, "refs/tags/#{tag_name}"])
-    IO.puts("Pushed tag #{tag_name}.")
+    # RFD66606-2312, once per release: the tag is computed from that release's
+    # last commit (its branch tip, no extra commit on top), with that commit's
+    # committer time in UTC. Release branches are local work names and are
+    # never pushed; the pseudo-version tag is the published artifact, and
+    # `stage/<release>` is the moving tag that names the build the release
+    # holds. The prefix keeps it from colliding with the local branch name.
+    Enum.each(releases, fn release ->
+      {stamp, 0} =
+        System.cmd("git", ["log", "-1", "--format=%cd %H", "--date=format-local:%Y%m%d%H%M%S", "refs/heads/#{release}"],
+          env: [{"TZ", "UTC"}]
+        )
+
+      [time, sha] = String.split(String.trim(stamp), " ")
+      tag_name = "v0.0.0-#{time}-#{String.slice(sha, 0, 12)}"
+
+      run!.("git", ["tag", "-a", tag_name, "-m", "#{release} #{tag_name}\n\nentities-assembly: #{assembly_sha}", sha])
+      run!.("git", ["push", merge_remote, "refs/tags/#{tag_name}"])
+      run!.("git", ["tag", "-f", "stage/#{release}", sha])
+      run!.("git", ["push", "--force", merge_remote, "refs/tags/stage/#{release}"])
+      IO.puts("Pushed #{tag_name} and moved stage/#{release} to it.")
+    end)
   else
-    IO.puts("Dry run: would tag the last commit of the assembled chain with a pseudo-version (no push).")
+    IO.puts("Dry run: would tag each release (#{Enum.join(releases, ", ")}) with a pseudo-version and move its stage tag (no push).")
   end
 rescue
   e ->
@@ -220,10 +236,10 @@ rescue
 end
 
 # Success / dry-run: clean up unconditionally so every run ends back on the base
-# branch with no `merge_branch` lingering.
+# branch with no release branch lingering.
 cleanup.()
 
-IO.puts("ALL DONE. Cleaned up #{merge_branch}; back on #{original_branch}. ------")
+IO.puts("ALL DONE. Cleaned up #{Enum.join(releases, ", ")}; back on #{original_branch}. ------")
 
 if has_changes do
   IO.puts("""

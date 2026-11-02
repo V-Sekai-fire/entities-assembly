@@ -48,18 +48,30 @@ defmodule Assembler.ConfigTest do
 
   # Read against the file rather than a copy of it: the target name and the branch
   # list move every release, and a restated pair fails on the move rather than on a bug.
-  test "the real gitassembly parses to one stage node" do
-    lines = File.read!("gitassembly") |> String.split("
-", trim: true)
-    ["stage", target, base] = lines |> Enum.find(&String.starts_with?(&1, "stage ")) |> String.split()
+  test "the real gitassembly parses to a chain of nested releases" do
+    lines = File.read!("gitassembly") |> String.split("\n", trim: true)
+
+    stages =
+      for l <- lines, String.starts_with?(l, "stage "),
+          do: l |> String.split() |> tl() |> List.to_tuple()
+
     merged = Enum.count(lines, &String.starts_with?(&1, "merge "))
 
     assert {:ok, nodes, _} = Config.parse("gitassembly")
-    assert [{name, node}] = Map.to_list(nodes)
-    assert name == target
-    assert node.type == :stage
-    assert node.base == base
-    assert length(node.merge) == merged
+    assert map_size(nodes) == length(stages)
+    assert Enum.sum(for {_, n} <- nodes, do: length(n.merge)) == merged
+
+    for {target, base} <- stages do
+      assert nodes[target].type == :stage
+      assert nodes[target].base == base
+    end
+
+    # Exactly one release stands on something outside the file; every other
+    # release is nested on one in it, so the releases form a single chain.
+    names = MapSet.new(stages, &elem(&1, 0))
+    assert Enum.count(stages, fn {_, base} -> not MapSet.member?(names, base) end) == 1
+    assert {:ok, ordered} = Assembler.Run.order(nodes)
+    assert length(ordered) == length(stages)
   end
 
   test "a comment character is data, not a comment" do

@@ -20,20 +20,13 @@ defmodule Assembler.MixProject do
     [extra_applications: [:logger]]
   end
 
-  # egit is an Erlang NIF over libgit2, Apache-2.0. It replaces the GPLv3
-  # git-assembler it replaced is deleted; nothing GPLv3 is vendored here. Only local
-  # operations go through it -- branch, merge, rebase, rev-parse -- because the
-  # assembler itself makes no network calls; clone and fetch stay on system git
-  # in update_godot_v_sekai.exs.
+  # Every git operation is a system `git` process (System.cmd): crash-safe,
+  # since a failing git cannot take the VM down the way a NIF can, and no
+  # native dependency to build. The cost is a process per call and parsing
+  # git's text output, which is small next to the merges themselves.
   defp deps do
     [
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      # Fork: upstream's commit/2 records only HEAD as a parent, so a commit
-      # concluding a merge has one parent and git never sees the branch as
-      # merged. The fork reads MERGE_HEAD. Patch offered upstream. The branch
-      # branch also carries the MSVC build of the NIF, without which there is
-      # no Windows build at all.
-      {:egit, github: "V-Sekai-fire/egit", branch: "merge-commit-parents"}
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
 
