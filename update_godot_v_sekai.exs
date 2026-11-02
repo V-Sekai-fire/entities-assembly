@@ -23,7 +23,7 @@ merge_remote = "v-sekai-fire"
 # Named for where the engine actually lives. `v-sekai-multiplayer-fabric` is an archived org
 # and `v-sekai-fabric` redirects; both resolved here, so every run was clone-through-redirect,
 # which is somebody else's promise and not a name this repository should depend on.
-merge_remote_url = "https://github.com/V-Sekai-fire/entities-godot.git"
+merge_remote_url = "https://github.com/V-Sekai-fire/entities-zone.git"
 opentelemetry_remote = "opentelemetry-godot"
 opentelemetry_remote_url = "https://github.com/V-Sekai-fire/opentelemetry-godot.git"
 # Read from the assembly config's own stage line rather than duplicated here.
@@ -47,7 +47,7 @@ work_root = Path.join(script_dir, ".assembly-work")
 
 godot_path =
   case System.get_env("GODOT_PATH") do
-    nil -> Path.join(work_root, "entities-godot")
+    nil -> Path.join(work_root, "entities-zone")
     env -> Path.expand(env)
   end
 
