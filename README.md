@@ -9,11 +9,11 @@ The recipe and driver that assemble the multiplayer-fabric engine branch from fe
 ## Build and run
 
 ```sh
-pixi run mix deps.get
-pixi run mix test
+mix deps.get
+mix test
 ```
 
-The tests assemble throwaway repositories. The driver, `update_godot_v_sekai.exs`, pushes to the engine repository; its `--help` names the dry run.
+It needs Elixir and a system `git`, nothing native. The tests assemble throwaway repositories. The driver, `update_godot_v_sekai.exs`, pushes to the engine repository; its `--help` names the dry run.
 
 ## Licence
 
