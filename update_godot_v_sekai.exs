@@ -23,7 +23,11 @@ merge_remote = "v-sekai-fire"
 # Named for where the engine actually lives. `v-sekai-multiplayer-fabric` is an archived org
 # and `v-sekai-fabric` redirects; both resolved here, so every run was clone-through-redirect,
 # which is somebody else's promise and not a name this repository should depend on.
-merge_remote_url = "https://github.com/V-Sekai-fire/entities-zone.git"
+merge_remote_url = "https://github.com/V-Sekai-fire/entities-godot.git"
+# Feature branches come from merge_remote (entities-godot). The assembled tags go to
+# publish_remote (entities-zone), which only has main until something publishes to it.
+publish_remote = "entities-zone"
+publish_remote_url = "https://github.com/V-Sekai-fire/entities-zone.git"
 opentelemetry_remote = "opentelemetry-godot"
 opentelemetry_remote_url = "https://github.com/V-Sekai-fire/opentelemetry-godot.git"
 # Read from the assembly config's own stage line rather than duplicated here.
@@ -47,7 +51,7 @@ work_root = Path.join(script_dir, ".assembly-work")
 
 godot_path =
   case System.get_env("GODOT_PATH") do
-    nil -> Path.join(work_root, "entities-zone")
+    nil -> Path.join(work_root, "entities-godot")
     env -> Path.expand(env)
   end
 
@@ -132,6 +136,7 @@ end
 IO.puts("Checkout remotes")
 
 add_remote.(merge_remote, merge_remote_url)
+add_remote.(publish_remote, publish_remote_url)
 add_remote.(opentelemetry_remote, opentelemetry_remote_url)
 
 # The branch the clone landed on is the repository's default; that is the base
@@ -220,9 +225,9 @@ try do
       tag_name = "v0.0.0-#{time}-#{String.slice(sha, 0, 12)}"
 
       run!.("git", ["tag", "-a", tag_name, "-m", "#{release} #{tag_name}\n\nentities-assembly: #{assembly_sha}", sha])
-      run!.("git", ["push", merge_remote, "refs/tags/#{tag_name}"])
+      run!.("git", ["push", publish_remote, "refs/tags/#{tag_name}"])
       run!.("git", ["tag", "-f", "stage/#{release}", sha])
-      run!.("git", ["push", "--force", merge_remote, "refs/tags/stage/#{release}"])
+      run!.("git", ["push", "--force", publish_remote, "refs/tags/stage/#{release}"])
       IO.puts("Pushed #{tag_name} and moved stage/#{release} to it.")
     end)
   else
