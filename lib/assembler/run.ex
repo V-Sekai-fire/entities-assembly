@@ -4,8 +4,7 @@ defmodule Assembler.Run do
 
   The git commands match what `git-assembler` issued, because the bar RFD66606-2243
   sets for this replacement is a byte-identical tree rather than a similar one:
-  bootstrap with `checkout --no-guess -b`, then `merge --rerere-autoupdate
-  --no-edit` per dependency in declared order, and a dependency that is the
+  bootstrap with `checkout --no-guess -b`, then `merge --no-ff --no-edit` per dependency in declared order, and a dependency that is the
   node's own base is skipped rather than merged into itself.
 
   Only `stage` and `merge` are executed. `rebase` raises rather than falling
@@ -35,11 +34,13 @@ defmodule Assembler.Run do
     # --recreate semantics: the branch may or may not exist, and either is fine.
     _ = git(repo, ["branch", "-D", node.name])
 
-    with :ok <- git!(repo, ["checkout", "-q", "--no-guess", "-b", node.name, base]) do
-      node.merge
-      |> Enum.reject(&(&1 == base))
+    deps = Enum.reject(node.merge, &(&1 == base))
+
+    with :ok <- git!(repo, ["checkout", "-q", "--no-guess", "-b", node.name, base]),
+         {:ok, env} <- deterministic_env(repo, [base | deps]) do
+      deps
       |> Enum.reduce_while(:ok, fn dep, :ok ->
-        case merge(repo, dep) do
+        case merge(repo, dep, env) do
           :ok -> {:cont, :ok}
           err -> {:halt, err}
         end
@@ -50,18 +51,52 @@ defmodule Assembler.Run do
   defp build(_repo, node),
     do: {:error, "#{node.name}: only a stage node with a base can be assembled"}
 
-  # rerere may resolve a conflict after `merge` has already exited non-zero, so
-  # the commit is attempted before the merge is called a failure.
-  defp merge(repo, dep) do
-    case git(repo, ["merge", "-q", "--rerere-autoupdate", "--no-edit", dep]) do
+  # rerere is banned: it replays resolutions from a local cache that is not in
+  # the commit, so the same inputs would assemble differently per machine. It is
+  # switched off explicitly (a user's rerere.enabled=true must not leak in), and
+  # a conflict fails the assembly after the merge is aborted.
+  #
+  # Every merge is `--no-ff` so each input branch is recorded as a parent of the
+  # result, even when it could fast-forward. Dates and identity come from `env`.
+  defp merge(repo, dep, env) do
+    case git(repo, ["-c", "rerere.enabled=false", "merge", "-q", "--no-ff", "--no-edit", dep], env) do
       {_, 0} ->
         :ok
 
       {out, _} ->
-        case git(repo, ["commit", "-q", "--no-edit"]) do
-          {_, 0} -> :ok
-          _ -> {:error, "merging #{dep} failed:\n#{out}"}
-        end
+        _ = git(repo, ["merge", "--abort"])
+        {:error, "merging #{dep} failed:\n#{out}"}
+    end
+  end
+
+  # The merge commits' timestamps and identity must not depend on when or where
+  # the assembly runs, or the same inputs hash differently. The time is the
+  # newest committer time among the base and every merged tip, so it is the
+  # time of the last commit in the chain; the identity is the v-sekai-fire-persona GitHub App bot (id 327205944).
+  defp deterministic_env(repo, refs) do
+    refs
+    |> Enum.reduce_while({:ok, []}, fn ref, {:ok, acc} ->
+      case git(repo, ["log", "-1", "--format=%ct", ref]) do
+        {out, 0} -> {:cont, {:ok, [String.to_integer(String.trim(out)) | acc]}}
+        {out, _} -> {:halt, {:error, "cannot read the commit time of #{ref}:\n#{out}"}}
+      end
+    end)
+    |> case do
+      {:ok, times} ->
+        date = "#{Enum.max(times)} +0000"
+
+        {:ok,
+         [
+           {"GIT_AUTHOR_DATE", date},
+           {"GIT_COMMITTER_DATE", date},
+           {"GIT_AUTHOR_NAME", "v-sekai-fire-persona[bot]"},
+           {"GIT_AUTHOR_EMAIL", "327205944+v-sekai-fire-persona[bot]@users.noreply.github.com"},
+           {"GIT_COMMITTER_NAME", "v-sekai-fire-persona[bot]"},
+           {"GIT_COMMITTER_EMAIL", "327205944+v-sekai-fire-persona[bot]@users.noreply.github.com"}
+         ]}
+
+      err ->
+        err
     end
   end
 
@@ -72,6 +107,6 @@ defmodule Assembler.Run do
     end
   end
 
-  defp git(repo, args),
-    do: System.cmd("git", ["-C", repo] ++ args, stderr_to_stdout: true)
+  defp git(repo, args, env \\ []),
+    do: System.cmd("git", ["-C", repo] ++ args, stderr_to_stdout: true, env: env)
 end
