@@ -42,15 +42,40 @@ defmodule Assembler.RunTest do
   defp merges(dir, range),
     do: System.cmd("git", ["-C", dir, "rev-list", "--count", "--merges", range]) |> elem(0) |> String.trim()
 
-  # git-assembler passes no --ff flag, so the first dependency fast-forwards a
-  # freshly staged branch and only the second needs a merge commit. Asserting two
-  # here would assert --no-ff, which is a different assembler.
-  test "a stage with two merges carries both", %{dir: dir} do
+  # Every merge is --no-ff, so each input is a parent of the result even when it
+  # could have fast-forwarded; a rebuild can read every input tip from the commit.
+  test "a stage with two merges carries both, each as a merge commit", %{dir: dir} do
     assert :ok = Run.assemble(dir, config("stage out base\nmerge out topic-a topic-b\n"))
 
     assert File.read!(Path.join(dir, "topic-a")) == "topic-a\n"
     assert File.read!(Path.join(dir, "topic-b")) == "topic-b\n"
-    assert merges(dir, "base..out") == "1"
+    assert merges(dir, "base..out") == "2"
+  end
+
+  test "the same inputs give the same commit, whoever runs it and whenever", %{dir: dir} do
+    cfg = config("stage out base\nmerge out topic-a topic-b\n")
+    assert :ok = Run.assemble(dir, cfg)
+    {first, 0} = System.cmd("git", ["-C", dir, "rev-parse", "out"])
+
+    git(dir, ["checkout", "-q", "base"])
+    git(dir, ["config", "user.name", "someone-else"])
+    Process.sleep(1100)
+    assert :ok = Run.assemble(dir, cfg)
+    assert {^first, 0} = System.cmd("git", ["-C", dir, "rev-parse", "out"])
+  end
+
+  test "a nested stage is built after its base, whatever the file order", %{dir: dir} do
+    cfg = config("stage outer inner\nmerge outer topic-b\n\nstage inner base\nmerge inner topic-a\n")
+    assert :ok = Run.assemble(dir, cfg)
+
+    assert {_, 0} = System.cmd("git", ["-C", dir, "merge-base", "--is-ancestor", "inner", "outer"])
+    assert File.read!(Path.join(dir, "topic-a")) == "topic-a\n"
+    assert File.read!(Path.join(dir, "topic-b")) == "topic-b\n"
+  end
+
+  test "a stage cycle is refused and named", %{dir: dir} do
+    assert {:error, why} = Run.assemble(dir, config("stage x y\nmerge x topic-a\nstage y x\nmerge y topic-b\n"))
+    assert why =~ "cycle"
   end
 
   test "assembling twice from the same refs gives the same tree", %{dir: dir} do
@@ -73,8 +98,8 @@ defmodule Assembler.RunTest do
 
   test "a dependency that is the base is not merged into itself", %{dir: dir} do
     assert :ok = Run.assemble(dir, config("stage out base\nmerge out base topic-a\n"))
-    # topic-a fast-forwards, and base was skipped rather than merged into itself.
-    assert merges(dir, "base..out") == "0"
+    # base was skipped rather than merged into itself; only topic-a is a merge.
+    assert merges(dir, "base..out") == "1"
     assert File.read!(Path.join(dir, "topic-a")) == "topic-a\n"
   end
 
@@ -87,11 +112,12 @@ defmodule Assembler.RunTest do
 
     assert {:error, why} = Run.assemble(dir, config("stage out base\nmerge out clash-a clash-b\n"))
     assert why =~ "clash-b"
-    # The conflict is left in the tree for a human, as git-assembler left it. What
-    # must not happen is the caller being told the assembly succeeded.
-    assert File.read!(Path.join(dir, "shared")) =~ "<<<<<<<"
-    assert {_, 0} = System.cmd("git", ["-C", dir, "rev-parse", "--verify", "MERGE_HEAD"],
-                               stderr_to_stdout: true)
+    # rerere is banned, so nothing resolves the conflict: the merge is aborted and
+    # the caller is told it failed. No marker is committed or left behind.
+    refute File.read!(Path.join(dir, "shared")) =~ "<<<<<<<"
+    assert {_, code} = System.cmd("git", ["-C", dir, "rev-parse", "--verify", "MERGE_HEAD"],
+                                  stderr_to_stdout: true)
+    assert code != 0
   end
 
   test "rebase is refused rather than silently skipped", %{dir: dir} do
