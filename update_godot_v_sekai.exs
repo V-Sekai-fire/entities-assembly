@@ -8,8 +8,9 @@ if Enum.any?(argv, &(&1 in ["-h", "--help"])) do
 
   --help, -h       Display help
   --dry-run, -n    Do not push.
-  --only=<release> Tag and publish only this release, for example r4-party. Every stage is
-                   still built, because the releases are nested.
+  --only=<release> Tag and publish only this release. Every stage is still built, because the
+                   releases are nested. One of the `stage` lines in gitassembly:
+                     r0-base, r1-see, r2-hear, r3-wear, r4-party
   """)
   System.halt(0)
 end
