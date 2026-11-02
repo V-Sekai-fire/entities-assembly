@@ -1,6 +1,6 @@
 # entities-assembly
 
-The recipe and driver that assemble the multiplayer-fabric engine branch from feature branches and push it to `entities-zone`.
+The recipe and driver that assemble the multiplayer-fabric engine branch from feature branches and publish its release tags to `entities-zone`, with the feature branches read from `entities-godot`.
 
 ## What it is for
 
