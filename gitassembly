@@ -1,4 +1,4 @@
-stage assembly remotes/v-sekai-fire/dev/ci-ar-response-file
+stage assembly remotes/v-sekai-fire/main
 
 merge assembly remotes/v-sekai-fire/dev/sdl
 merge assembly remotes/v-sekai-fire/dev/glslang
