@@ -39,9 +39,6 @@ merge r0-base remotes/v-sekai-fire/dev/webgpu-rebase
 merge r0-base remotes/v-sekai-fire/dev/xatlas-true-rotation
 
 stage r1-see r0-base
-merge r1-see remotes/v-sekai-fire/dev/http3
-merge r1-see remotes/v-sekai-fire/dev/multiplayer-fabric
-merge r1-see remotes/v-sekai-fire/dev/multiplayer-fabric-asset
 merge r1-see remotes/v-sekai-fire/dev/xr-grid
 merge r1-see remotes/v-sekai-fire/dev/order-independent-transparency
 
