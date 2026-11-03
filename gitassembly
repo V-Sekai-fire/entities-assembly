@@ -6,6 +6,7 @@ merge r0-base remotes/v-sekai-fire/dev/eigen
 merge r0-base remotes/v-sekai-fire/dev/d3d12-download-retry
 merge r0-base remotes/v-sekai-fire/dev/lint-cleanup
 merge r0-base remotes/v-sekai-fire/dev/ci-fixes
+merge r0-base remotes/v-sekai-fire/dev/double-release
 merge r0-base remotes/v-sekai-fire/dev/lint-config
 merge r0-base remotes/v-sekai-fire/dev/call-gui-input
 merge r0-base remotes/v-sekai-fire/dev/open-telemetry
