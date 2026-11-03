@@ -41,6 +41,7 @@ merge r0-base remotes/v-sekai-fire/dev/xatlas-true-rotation
 stage r1-see r0-base
 merge r1-see remotes/v-sekai-fire/dev/xr-grid
 merge r1-see remotes/v-sekai-fire/dev/order-independent-transparency
+merge r1-see remotes/v-sekai-fire/dev/shader-templates-oit
 
 stage r2-hear r1-see
 merge r2-hear remotes/v-sekai-fire/dev/speech
