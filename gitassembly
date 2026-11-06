@@ -9,6 +9,7 @@ merge r0-base remotes/v-sekai-fire/dev/ci-fixes
 merge r0-base remotes/v-sekai-fire/dev/double-release
 merge r0-base remotes/v-sekai-fire/dev/lint-config
 merge r0-base remotes/v-sekai-fire/dev/call-gui-input
+merge r0-base remotes/v-sekai-fire/dev/sqlite
 merge r0-base remotes/v-sekai-fire/dev/open-telemetry
 merge r0-base remotes/v-sekai-fire/dev/keychain
 merge r0-base remotes/v-sekai-fire/dev/native-media
@@ -54,4 +55,3 @@ merge r3-wear remotes/v-sekai-fire/dev/physics-3d
 merge r3-wear remotes/v-sekai-fire/dev/csg-vertex-attributes
 
 stage r4-party r3-wear
-merge r4-party remotes/v-sekai-fire/dev/sqlite
