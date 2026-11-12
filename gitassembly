@@ -28,14 +28,12 @@ merge r0-base remotes/v-sekai-fire/dev/server-rendering
 merge r0-base remotes/v-sekai-fire/dev/build-scripts
 merge r0-base remotes/v-sekai-fire/dev/blocklist-avx
 merge r0-base remotes/v-sekai-fire/dev/compute-animation-mixer
-merge r0-base remotes/v-sekai-fire/dev/language-model
 merge r0-base remotes/v-sekai-fire/dev/lottie
 merge r0-base remotes/v-sekai-fire/dev/mcp
 merge r0-base remotes/v-sekai-fire/dev/movie-writer-readback
 merge r0-base remotes/v-sekai-fire/dev/movie-writer-ffmpeg-nut
 merge r0-base remotes/v-sekai-fire/dev/pixal3d
 merge r0-base remotes/v-sekai-fire/dev/resource-whitelist
-merge r0-base remotes/v-sekai-fire/dev/webgpu-ci-green
 merge r0-base remotes/v-sekai-fire/dev/webgpu-rebase
 merge r0-base remotes/v-sekai-fire/dev/xatlas-true-rotation
 
