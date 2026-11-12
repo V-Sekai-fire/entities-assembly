@@ -43,7 +43,6 @@ stage r1-see r0-base
 merge r1-see remotes/v-sekai-fire/dev/xr-grid
 merge r1-see remotes/v-sekai-fire/dev/order-independent-transparency
 merge r1-see remotes/v-sekai-fire/dev/shader-templates-oit
-merge r1-see remotes/v-sekai-fire/dev/http3
 
 stage r2-hear r1-see
 merge r2-hear remotes/v-sekai-fire/dev/speech
