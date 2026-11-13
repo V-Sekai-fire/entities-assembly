@@ -32,7 +32,6 @@ merge r0-base remotes/v-sekai-fire/dev/lottie
 merge r0-base remotes/v-sekai-fire/dev/mcp
 merge r0-base remotes/v-sekai-fire/dev/movie-writer-readback
 merge r0-base remotes/v-sekai-fire/dev/movie-writer-ffmpeg-nut
-merge r0-base remotes/v-sekai-fire/dev/pixal3d
 merge r0-base remotes/v-sekai-fire/dev/resource-whitelist
 merge r0-base remotes/v-sekai-fire/dev/webgpu-rebase
 merge r0-base remotes/v-sekai-fire/dev/xatlas-true-rotation
