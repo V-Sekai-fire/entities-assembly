@@ -38,6 +38,8 @@ merge_remote_url = "https://github.com/V-Sekai-fire/entities-godot.git"
 # publish_remote (entities-zone), which only has main until something publishes to it.
 publish_remote = "entities-zone"
 publish_remote_url = "https://github.com/V-Sekai-fire/entities-zone.git"
+# Existing dev/* branch on entities-zone that tracks the newest published release.
+zone_branch = "dev/latest-tag"
 opentelemetry_remote = "opentelemetry-godot"
 opentelemetry_remote_url = "https://github.com/V-Sekai-fire/opentelemetry-godot.git"
 # Read from the assembly config's own stage line rather than duplicated here.
@@ -244,9 +246,12 @@ try do
     # RFD66606-2312, once per release: the tag is computed from that release's
     # last commit (its branch tip, no extra commit on top), with that commit's
     # committer time in UTC. Release branches are local work names and are
-    # never pushed; the pseudo-version tag is the published artifact, and
+    # local names, and the pseudo-version tag is the published artifact.
     # `stage/<release>` is the moving tag that names the build the release
     # holds. The prefix keeps it from colliding with the local branch name.
+    # The newest published release is also written to the existing
+    # entities-zone branch `dev/latest-tag` (force: it is rebuilt every run),
+    # so a build can be checked out by name and not only by tag.
     Enum.each(published, fn release ->
       {stamp, 0} =
         System.cmd("git", ["log", "-1", "--format=%cd %H", "--date=format-local:%Y%m%d%H%M%S", "refs/heads/#{release}"],
@@ -260,10 +265,15 @@ try do
       run!.("git", ["push", publish_remote, "refs/tags/#{tag_name}"])
       run!.("git", ["tag", "-f", "stage/#{release}", sha])
       run!.("git", ["push", "--force", publish_remote, "refs/tags/stage/#{release}"])
+      if release == List.last(published) do
+        run!.("git", ["push", "--force", publish_remote, "#{sha}:refs/heads/#{zone_branch}"])
+        IO.puts("Wrote #{zone_branch} to #{sha}.")
+      end
+
       IO.puts("Pushed #{tag_name} and moved stage/#{release} to it.")
     end)
   else
-    IO.puts("Dry run: would tag each published release (#{Enum.join(published, ", ")}) with a pseudo-version and move its stage tag (no push).")
+    IO.puts("Dry run: would tag each published release (#{Enum.join(published, ", ")}) with a pseudo-version, move its stage tag and write #{zone_branch} to entities-zone (no push).")
   end
 rescue
   e ->
