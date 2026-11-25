@@ -105,8 +105,9 @@ A release whose base is another release is built on it, whatever the
 file order (`Assembler.Run.order/1`); a cycle is refused. A conflict
 fails the run and names the release it happened in.
 
-No version is kept by hand. Release branches are local work names and
-are never pushed. Each release is tagged from its own last commit, in
+No version is kept by hand. Release branches are local work names. The
+newest published release is also force-pushed to the `entities-zone` branch
+`dev/latest-tag`, so a build can be checked out by name. Each release is tagged from its own last commit, in
 the form RFD66606-2312 sets for every release tag, with that commit's
 committer time:
 
